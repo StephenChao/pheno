@@ -158,10 +158,6 @@ skim_vars = {
 }
 
 
-# ### Investigate jet information
-
-# In[17]:
-
 
 events = files["TTbar_semilep"]
 
@@ -180,29 +176,9 @@ candidate_fatjets = ak.flatten(ak.pad_none(events.JetPUPPIAK8, num_jets, axis=1)
 # In[19]:
 
 
-def plot_NAK8(jets, n_min, n_max, nbins, sample , jet_type):
-    f = plt.figure(figsize=(12,14))
-    ax = f.add_subplot(1, 1, 1)
-    hist_region = bh.Histogram(bh.axis.Regular(nbins, n_min, n_max), storage=bh.storage.Weight())
-    hist_region.fill(ak.num(jets.Eta, axis = 1))
-    hist_value_up = flow(hist_region)[0]
-    hist_var_up   = flow(hist_region)[1]
-    err_up = np.nan_to_num(error_bar(hist_value_up, hist_var_up, type = "mc"), nan = 0)
-    hep.histplot(hist_value_up, bins=hist_region.axes[0].edges, yerr=err_up, label=sample, histtype='step', stack=False, linewidth=2, ax=ax, color = "red")
-    ax.set_xlabel(f"Number of {jet_type}")
-    ax.set_ylabel("Events")
-    ax.set_yscale('log') 
-    ax.legend(loc="upper right", ncol=1, frameon=False, fontsize=22)
-    # plt.text(0.05,0.83,region + "," + files_str,fontsize=24, color="black", ha='left',transform=ax.transAxes)
-    plt.savefig(f"{plot_dir}/NAK8_{jet_type}.pdf", bbox_inches='tight')    
-
-# plot_NAK8(events.JetPUPPIAK8,0,7,7,"TTbar_semilep", "JetPUPPIAK8")
-# plot_NAK8(events.Jet,0,20,20,"TTbar_semilep","Jet")
-
 
 # ### jet matching
 
-# In[20]:
 
 
 d_PDGID = 1
@@ -229,7 +205,6 @@ H_PDGID = 25
 deltaR = 0.8
 
 
-# In[21]:
 
 
 # finding the two gen tops
@@ -239,14 +214,12 @@ tops = events.Particle[
 ]
 
 
-# In[22]:
 
 
 # collect all bs
 bs = events.Particle[tops.D2]
 
 
-# In[23]:
 
 
 # find the last W index
@@ -261,50 +234,33 @@ def find_last_position(arr, value):
 
 
 
-# In[24]:
 
 
 pos_w_plus = find_last_position(events.Particle.PID, 24)
 pos_w_plus
 
 
-# In[25]:
 
 
 pos_w_minus = find_last_position(events.Particle.PID, -24)
 pos_w_minus
 
 
-# In[26]:
-
 
 #last copy W position
 w_index_array = ak.Array(ak.Array([pos_w_plus, pos_w_minus]).to_numpy().T)
 
-
-# In[27]:
 
 
 # collect last copy W
 ws = events.Particle[ak.Array([range(len(events.Particle))]).to_numpy().T, w_index_array.to_numpy()]
 
 
-# In[28]:
-
 
 # define hadronic decay W
 had_w_sel = (abs(events.Particle[ak.Array([range(len(events.Particle))]).to_numpy().T, ws.D1.to_numpy()].PID) <= 5)
 
 
-# In[29]:
-
-
-#quick test how many Wcb events
-# w_minus = events.Particle[(events.Particle.PID == -24)][:,-1]
-# ak.sum( (abs(events.Particle[ak.singletons(w_minus.D1)].PID) == 5) & (abs(events.Particle[ak.singletons(w_minus.D2)].PID) == 4 )) 
-
-
-# In[30]:
 
 
 # collect all hadronic decay W in all events
@@ -329,9 +285,14 @@ had_ws_D2_match = (delta_r(had_ws_D2,candidate_fatjets) < deltaR)
 # In[33]:
 
 
-# Wcb tag
+# W decay tag
+wcd = (( abs(had_ws_D1.PID) == 1) & (abs(had_ws_D2.PID) == 4 )) | (( abs(had_ws_D1.PID) == 4) & (abs(had_ws_D2.PID) == 1 ))
+wcs = (( abs(had_ws_D1.PID) == 3) & (abs(had_ws_D2.PID) == 4 )) | (( abs(had_ws_D1.PID) == 4) & (abs(had_ws_D2.PID) == 3 ))
 wcb = (( abs(had_ws_D1.PID) == 5) & (abs(had_ws_D2.PID) == 4 )) | (( abs(had_ws_D1.PID) == 4) & (abs(had_ws_D2.PID) == 5 ))
 
+wud = (( abs(had_ws_D1.PID) == 2) & (abs(had_ws_D2.PID) == 1 )) | (( abs(had_ws_D1.PID) == 1) & (abs(had_ws_D2.PID) == 2 ))
+wub = (( abs(had_ws_D1.PID) == 2) & (abs(had_ws_D2.PID) == 5 )) | (( abs(had_ws_D1.PID) == 5) & (abs(had_ws_D2.PID) == 2 ))
+wus = (( abs(had_ws_D1.PID) == 2) & (abs(had_ws_D2.PID) == 3 )) | (( abs(had_ws_D1.PID) == 3) & (abs(had_ws_D2.PID) == 2 ))
 
 # In[34]:
 
@@ -351,93 +312,18 @@ had_b_jet_match = (delta_r(bs_had,candidate_fatjets) < deltaR)
 
 match_dict = {
     "top_matched(t->bqq)": had_ws_D1_match * had_ws_D2_match * had_b_jet_match,
-    "W_matched(others)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * ~wcb,
-    "W_matched(W->cb)" : ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcb,
     "top_matched(t->bq)": (had_ws_D1_match * ~had_ws_D2_match * had_b_jet_match) | (~had_ws_D1_match * had_ws_D2_match * had_b_jet_match),
-    "unmatched" : (~had_ws_D1_match * ~had_ws_D2_match) | ( ~had_ws_D1_match * had_ws_D2_match * ~had_b_jet_match) | (had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match),
+    "W_matched(W->cd)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcd,
+    "W_matched(W->cs)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcs,
+    "W_matched(W->cb)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcb,
+    "W_matched(W->ud)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wud,
+    "W_matched(W->ub)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wub,
+    "W_matched(W->us)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wus,
+    "b_matched(had.t)" : ~had_ws_D1_match * ~had_ws_D2_match * had_b_jet_match,
+    "q_matched(had.W)" : ( ~had_ws_D1_match * had_ws_D2_match * ~had_b_jet_match) | (had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match),
+    "unmatched" : ~had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match,
 }
 
-
-# In[37]:
-
-
-len(events)
-
-
-# In[38]:
-
-
-np.sum(match_dict["top_matched(t->bqq)"])
-
-
-# In[39]:
-
-
-np.sum(match_dict["top_matched(t->bq)"])
-
-
-# In[40]:
-
-
-np.sum(match_dict["W_matched(others)"])
-
-
-# In[41]:
-
-
-np.sum(match_dict["W_matched(W->cb)"])
-
-
-# In[42]:
-
-
-np.sum(match_dict["unmatched"])
-
-
-# In[43]:
-
-
-# check unitary
-np.sum(match_dict["unmatched"]) + np.sum(match_dict["W_matched(W->cb)"]) + np.sum(match_dict["W_matched(others)"]) + np.sum(match_dict["top_matched(t->bqq)"]) + np.sum(match_dict["top_matched(t->bq)"])
-
-
-# In[44]:
-
-
-# make a pie-chart to visulize the fraction
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import mplhep as hep
-import boost_histogram as bh
-from cycler import cycler
-
-plt.figure(figsize=(15,15))
-ax=plt.gca()
-plt.grid()
-labels = ['top_matched(t->bqq)', 'top_matched(t->bq)', 'W_matched(others)', 'W_matched(W->cb)', 'unmatched']
-sizes = []
-labels_with_num = []
-for label in labels:
-    sizes.append(np.sum(match_dict[label]))
-    labels_with_num.append(label + ":"  + str(np.sum(match_dict[label])))
-colors = ['#ffff00', '#2ca02c', '#ff7f0e', '#800080','red']
-# highlight some component(optional)
-explode = (0., 0, 0, 1, 0)
-# plot the pie chat
-plt.pie(sizes, labels=None, colors=colors, autopct='%1.3f%%', startangle=0, explode=explode)
-plt.legend(labels_with_num, loc='upper right',fontsize = 25)
-# set title
-# plt.title(r'$\ \ Signal' + "" + r'\ jet_{a}\ decomposition $',fontsize = 30)
-plt.title("ttbar(semi-lep) samples Wcb candidate jet decomposition", fontsize = 25)
-# title_text = 'Pie Chart Example'
-# plt.text(-1,1.1, file_name + ", " + region, fontsize=45)
-plt.savefig(f"{plot_dir}/Piechart_"+ "wcb" + "_deco.pdf", bbox_inches='tight')
-plt.show()
-
-
-# ### add output: necessary information for making plot
-
-# In[52]:
 
 
 # output_file = "/data/bond/zhaoyz/Pheno/slimmedtree/slim_" + delphes_roots["TTbar_semilep"].split("/")[-1] 
@@ -449,10 +335,17 @@ with uproot.recreate(output_file) as root_file:
         "Eta_j": np.array(candidate_fatjets.Eta),
         "Phi_j": np.array(candidate_fatjets.Phi),
         "Mass_j": np.array(candidate_fatjets.Mass),
+        "Mass_j_sd": np.array(candidate_fatjets.SoftDroppedP4_5[...,0].mass),
         "top_matched_bqq" : ak.Array(np.array(match_dict["top_matched(t->bqq)"]).astype(int)),
         "top_matched_bq" : ak.Array(np.array(match_dict["top_matched(t->bq)"]).astype(int)),
-        "w_matched_others" : ak.Array(np.array(match_dict["W_matched(others)"]).astype(int)),
+        "w_matched_cd" : ak.Array(np.array(match_dict["W_matched(W->cd)"]).astype(int)),
+        "w_matched_cs" : ak.Array(np.array(match_dict["W_matched(W->cs)"]).astype(int)),
         "w_matched_cb" : ak.Array(np.array(match_dict["W_matched(W->cb)"]).astype(int)),
+        "w_matched_ud" : ak.Array(np.array(match_dict["W_matched(W->ud)"]).astype(int)),
+        "w_matched_ub" : ak.Array(np.array(match_dict["W_matched(W->ub)"]).astype(int)),
+        "w_matched_us" : ak.Array(np.array(match_dict["W_matched(W->us)"]).astype(int)),
+        "b_matched" : ak.Array(np.array(match_dict["b_matched(had.t)"]).astype(int)),
+        "q_matched" : ak.Array(np.array(match_dict["q_matched(had.W)"]).astype(int)),        
         "unmatched" : ak.Array(np.array(match_dict["unmatched"]).astype(int)),
         "isWcb" : ak.Array(np.array(wcb).astype(int)),
         "NAK8" : ak.num(events.JetPUPPIAK8.Eta, axis = 1),
