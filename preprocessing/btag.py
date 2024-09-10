@@ -427,13 +427,35 @@ b_tag_tight  = compare_awkward_arrays(b_tag_eff_tight,  b_tag_eff_random)
 b_tag_medium = compare_awkward_arrays(b_tag_eff_medium, b_tag_eff_random)
 b_tag_loose  = compare_awkward_arrays(b_tag_eff_loose,  b_tag_eff_random)
 
-b_tag_tight_truth =  events["Jet"].BTag * b_tag_tight
-b_tag_medium_truth = events["Jet"].BTag * b_tag_medium
-b_tag_loose_truth =  events["Jet"].BTag * b_tag_loose
+
+b_tag_ideal  = compare_awkward_arrays(b_tag_eff_ideal,  b_tag_eff_random)
+
+
+b_PDGID = 5
+
+b_tag_gen  = ak.values_astype((events["Jet"].Flavor ==  b_PDGID), int)
+
+#clean
+
+dr_AK8_cand_AK4_all = delta_r(candidate_fatjets,events["Jet"])
+
+b_exclusive = ak.values_astype((dr_AK8_cand_AK4_all > 0.8), int)
+
+# b_tag_tight_truth =  events["Jet"].BTag * b_tag_tight
+# b_tag_medium_truth = events["Jet"].BTag * b_tag_medium
+# b_tag_loose_truth =  events["Jet"].BTag * b_tag_loose
+
+b_tag_tight_truth =  b_exclusive * b_tag_gen * b_tag_tight
+b_tag_medium_truth = b_exclusive * b_tag_gen * b_tag_medium
+b_tag_loose_truth =  b_exclusive * b_tag_gen * b_tag_loose
+
+b_tag_ideal_truth =  b_exclusive * b_tag_gen * b_tag_ideal
 
 n_b_tight = ak.sum(b_tag_tight_truth, axis = 1)
 n_b_medium = ak.sum(b_tag_medium_truth, axis = 1)
 n_b_loose = ak.sum(b_tag_loose_truth, axis = 1)
+
+n_b_ideal = ak.sum(b_tag_ideal_truth, axis = 1)
 
 # output_file = "/data/bond/zhaoyz/Pheno/slimmedtree/slim_" + delphes_roots["TTbar_semilep"].split("/")[-1] 
 output_file = options.outfile
@@ -449,6 +471,7 @@ with uproot.recreate(output_file) as root_file:
         "n_b_tight" : np.array(n_b_tight),
         "n_b_medium" : np.array(n_b_medium),
         "n_b_loose" : np.array(n_b_loose),
+        "n_b_ideal" : np.array(n_b_ideal),
         
         "top_matched_bqq" : ak.Array(np.array(match_dict["top_matched(t->bqq)"]).astype(int)),
         "top_matched_bq" : ak.Array(np.array(match_dict["top_matched(t->bq)"]).astype(int)),
