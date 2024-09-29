@@ -407,16 +407,41 @@ def find_closest_SF_awkward(json_path, arr):
 
 pT_distribution = events["Jet"].PT
 
+mis_tag_udsg = {
+    "Tight" : 0.001,
+    "Medium": 0.01,
+    "Loose" : 0.1,
+    "Ideal" : 0,
+}
+
+mis_tag_c = {
+    "Tight" : 0.04,
+    "Medium": 0.13,
+    "Loose" : 0.3,
+    "Ideal" : 0,
+}
+
 json_dir = "./json/28Aug24"
 b_tag_eff_loose =  find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_loose.json"  , arr = pT_distribution)
 b_tag_eff_medium = find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_medium.json" , arr = pT_distribution)
 b_tag_eff_tight =  find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_tight.json"  , arr = pT_distribution)
-
 b_tag_eff_ideal = ak.ones_like(b_tag_eff_tight)
+
+# mistag
+mistag_bvsl_loose  = mis_tag_udsg["Loose"]  * ak.ones_like(b_tag_eff_ideal)
+mistag_bvsl_medium = mis_tag_udsg["Medium"] * ak.ones_like(b_tag_eff_ideal)
+mistag_bvsl_tight  = mis_tag_udsg["Tight"]  * ak.ones_like(b_tag_eff_ideal)
+mistag_bvsl_ideal  = mis_tag_udsg["Ideal"]  * ak.ones_like(b_tag_eff_ideal)
+
+mistag_bvsc_loose  = mis_tag_c["Loose"]  * ak.ones_like(b_tag_eff_ideal)
+mistag_bvsc_medium = mis_tag_c["Medium"] * ak.ones_like(b_tag_eff_ideal)
+mistag_bvsc_tight  = mis_tag_c["Tight"]  * ak.ones_like(b_tag_eff_ideal)
+mistag_bvsc_ideal  = mis_tag_c["Ideal"]  * ak.ones_like(b_tag_eff_ideal)
 
 shape = ak.num(pT_distribution)
 # 生成一个与输入awkward数组形状相同的、在0-1之间均匀分布的随机数awkward数组
 b_tag_eff_random = ak.Array([np.random.uniform(0, 1, length) for length in shape])
+mistag_eff_random = ak.Array([np.random.uniform(0, 1, length) for length in shape])
 
 def compare_awkward_arrays(arr, arr2):
     # 逐元素比较 arr2 和 arr，生成布尔awkward数组，条件满足时填1，否则填0
@@ -426,14 +451,25 @@ def compare_awkward_arrays(arr, arr2):
 b_tag_tight  = compare_awkward_arrays(b_tag_eff_tight,  b_tag_eff_random)
 b_tag_medium = compare_awkward_arrays(b_tag_eff_medium, b_tag_eff_random)
 b_tag_loose  = compare_awkward_arrays(b_tag_eff_loose,  b_tag_eff_random)
-
-
 b_tag_ideal  = compare_awkward_arrays(b_tag_eff_ideal,  b_tag_eff_random)
 
+mis_tag_udsg_tight  = compare_awkward_arrays(mistag_bvsl_tight  ,  mistag_eff_random)
+mis_tag_udsg_medium = compare_awkward_arrays(mistag_bvsl_medium ,  mistag_eff_random)
+mis_tag_udsg_loose  = compare_awkward_arrays(mistag_bvsl_loose  ,  mistag_eff_random)
+mis_tag_udsg_ideal  = compare_awkward_arrays(mistag_bvsl_ideal  ,  mistag_eff_random)
 
+mis_tag_c_tight  = compare_awkward_arrays(mistag_bvsc_tight   ,  mistag_eff_random)
+mis_tag_c_medium = compare_awkward_arrays(mistag_bvsc_medium  ,  mistag_eff_random)
+mis_tag_c_loose  = compare_awkward_arrays(mistag_bvsc_loose   ,  mistag_eff_random)
+mis_tag_c_ideal  = compare_awkward_arrays(mistag_bvsc_ideal   ,  mistag_eff_random)
+
+
+c_PDGID = 4
 b_PDGID = 5
 
 b_tag_gen  = ak.values_astype((events["Jet"].Flavor ==  b_PDGID), int)
+c_tag_gen      = ak.values_astype((events["Jet"].Flavor ==  c_PDGID), int)
+light_tag_gen  = ak.values_astype((events["Jet"].Flavor !=  b_PDGID) & ((events["Jet"].Flavor !=  c_PDGID)), int)
 
 #clean
 
@@ -445,17 +481,145 @@ b_exclusive = ak.values_astype((dr_AK8_cand_AK4_all > 0.8), int)
 # b_tag_medium_truth = events["Jet"].BTag * b_tag_medium
 # b_tag_loose_truth =  events["Jet"].BTag * b_tag_loose
 
+# truth match and correctly tagged
 b_tag_tight_truth =  b_exclusive * b_tag_gen * b_tag_tight
 b_tag_medium_truth = b_exclusive * b_tag_gen * b_tag_medium
 b_tag_loose_truth =  b_exclusive * b_tag_gen * b_tag_loose
-
 b_tag_ideal_truth =  b_exclusive * b_tag_gen * b_tag_ideal
+
+# mis-tag
+c_mis_tag_tight_truth  =  b_exclusive * c_tag_gen * mis_tag_c_tight 
+c_mis_tag_medium_truth =  b_exclusive * c_tag_gen * mis_tag_c_medium
+c_mis_tag_loose_truth  =  b_exclusive * c_tag_gen * mis_tag_c_loose 
+c_mis_tag_ideal_truth  =  b_exclusive * c_tag_gen * mis_tag_c_ideal 
+
+light_mis_tag_tight_truth  =  b_exclusive * light_tag_gen * mis_tag_udsg_tight 
+light_mis_tag_medium_truth =  b_exclusive * light_tag_gen * mis_tag_udsg_medium
+light_mis_tag_loose_truth  =  b_exclusive * light_tag_gen * mis_tag_udsg_loose 
+light_mis_tag_ideal_truth  =  b_exclusive * light_tag_gen * mis_tag_udsg_ideal 
+
+tight_tagged_b_jet_idx  = b_tag_tight_truth  + c_mis_tag_tight_truth  + light_mis_tag_tight_truth
+medium_tagged_b_jet_idx = b_tag_medium_truth + c_mis_tag_medium_truth + light_mis_tag_medium_truth
+loose_tagged_b_jet_idx  = b_tag_loose_truth  + c_mis_tag_loose_truth  + light_mis_tag_loose_truth
+ideal_tagged_b_jet_idx  = b_tag_ideal_truth  + c_mis_tag_ideal_truth  + light_mis_tag_ideal_truth
 
 n_b_tight = ak.sum(b_tag_tight_truth, axis = 1)
 n_b_medium = ak.sum(b_tag_medium_truth, axis = 1)
 n_b_loose = ak.sum(b_tag_loose_truth, axis = 1)
-
 n_b_ideal = ak.sum(b_tag_ideal_truth, axis = 1)
+
+has_two_tight_b =  (n_b_tight == 2)
+has_two_medium_b = (n_b_medium == 2)
+has_two_loose_b =  (n_b_loose == 2)
+has_two_ideal_b =  (n_b_ideal == 2)
+
+def get_two_b_jet(JetArr, tagged_b_jet_idx, has_two_b):
+    b_jets = ak.where(tagged_b_jet_idx == 1, JetArr, -99)
+    filtered_jets = ak.mask(b_jets, has_two_b)
+    is_none = ak.is_none(filtered_jets)
+    res = ak.where(is_none, -99, filtered_jets)
+    
+    def filter_jets(subarray):
+    # 如果是数字 0（代表之前是 None），直接返回 0
+        if type(subarray) == int:
+            return -99
+        # 对于非空子数组，提取其中的 Jet 元素
+        jets_only = [item for item in subarray if type(item) != int]
+        # 如果找到两个 Jet 元素，则返回它们，如果少于两个，返回找到的内容
+        return jets_only[:2] if len(jets_only) >= 2 else jets_only
+
+    # 3. 使用 map 操作将函数应用于每个子数组
+    result = ak.Array([filter_jets(subarray) for subarray in res])
+
+    def extract_first_jet(subarray):
+        if type(subarray) == int:  # 如果该位置是 0，则返回 0
+            return -99
+        else:
+            return subarray[0]  # 返回子数组中的第一个 Jet
+    
+    def extract_second_jet(subarray):
+        if type(subarray) == int:  # 如果该位置是 0，则返回 0
+            return -99
+        else:
+            return subarray[1]  # 返回子数组中的第一个 Jet
+
+    # 使用列表推导式遍历 Awkward 数组并提取第一个 Jet 或保留 0
+    result_first  = ak.Array([extract_first_jet(subarray) for subarray in result])
+    result_second = ak.Array([extract_second_jet(subarray) for subarray in result])
+
+    return result_first, result_second
+
+JetArr = events["Jet"]
+
+tight_a, tight_b   = get_two_b_jet(JetArr,   tight_tagged_b_jet_idx, has_two_tight_b)
+medium_a, medium_b = get_two_b_jet(JetArr, medium_tagged_b_jet_idx, has_two_medium_b)
+loose_a, loose_b   = get_two_b_jet(JetArr, loose_tagged_b_jet_idx, has_two_loose_b )
+ideal_a, ideal_b   = get_two_b_jet(JetArr, ideal_tagged_b_jet_idx, has_two_ideal_b )
+
+def process_jets(jet1, jet2):
+    if type(jet1) == int and type(jet2) == int:  # 如果两个数组的当前位置都是 0
+        return -99
+    elif type(jet1) != int and type(jet2) != int:  # 如果是 Jet 对象
+        return delta_r(jet1, jet2)  # 返回 Jet1.Eta - Jet2.Eta
+    else:
+        raise ValueError("Arrays do not match in shape or type.")
+
+def process_jets_between_b1_Wcb(jet1, jet2, Wcb):
+    if type(jet1) == int and type(jet2) == int:  # 如果两个数组的当前位置都是 0
+        return -99
+    elif type(jet1) != int and type(jet2) != int:  # 如果是 Jet 对象
+        return delta_r(jet1, Wcb)  # 返回 Jet1.Eta - Jet2.Eta
+    else:
+        raise ValueError("Arrays do not match in shape or type.")
+
+def process_jets_between_b2_Wcb(jet1, jet2, Wcb):
+    if type(jet1) == int and type(jet2) == int:  # 如果两个数组的当前位置都是 0
+        return -99
+    elif type(jet1) != int and type(jet2) != int:  # 如果是 Jet 对象
+        return delta_r(jet2, Wcb)  # 返回 Jet1.Eta - Jet2.Eta
+    else:
+        raise ValueError("Arrays do not match in shape or type.")
+
+def process_jets_deta(jet1, jet2):
+    if type(jet1) == int and type(jet2) == int:  # 如果两个数组的当前位置都是 0
+        return -99
+    elif type(jet1) != int and type(jet2) != int:  # 如果是 Jet 对象
+        return jet1.Eta - jet2.Eta  # 返回 Jet1.Eta - Jet2.Eta
+    else:
+        raise ValueError("Arrays do not match in shape or type.")
+
+def process_jets_product_eta(jet1, jet2):
+    if type(jet1) == int and type(jet2) == int:  # 如果两个数组的当前位置都是 0
+        return -99
+    elif type(jet1) != int and type(jet2) != int:  # 如果是 Jet 对象
+        return jet1.Eta * jet2.Eta  # 返回 Jet1.Eta - Jet2.Eta
+    else:
+        raise ValueError("Arrays do not match in shape or type.")
+    
+delta_r_tight  = ak.Array([process_jets(jet1, jet2) for jet1, jet2 in zip(tight_a, tight_b)])
+delta_r_medium = ak.Array([process_jets(jet1, jet2) for jet1, jet2 in zip(medium_a, medium_b)])
+delta_r_loose  = ak.Array([process_jets(jet1, jet2) for jet1, jet2 in zip(loose_a, loose_b  )])
+delta_r_ideal  = ak.Array([process_jets(jet1, jet2) for jet1, jet2 in zip(ideal_a, ideal_b  )])
+
+delta_r1_Wcb_tight  = ak.Array([process_jets_between_b1_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(tight_a, tight_b  , candidate_fatjets)])
+delta_r1_Wcb_medium = ak.Array([process_jets_between_b1_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(medium_a, medium_b, candidate_fatjets)])
+delta_r1_Wcb_loose  = ak.Array([process_jets_between_b1_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(loose_a, loose_b  , candidate_fatjets)])
+delta_r1_Wcb_ideal  = ak.Array([process_jets_between_b1_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(ideal_a, ideal_b  , candidate_fatjets)])
+
+delta_r2_Wcb_tight  = ak.Array([process_jets_between_b2_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(tight_a, tight_b  , candidate_fatjets)])
+delta_r2_Wcb_medium = ak.Array([process_jets_between_b2_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(medium_a, medium_b, candidate_fatjets)])
+delta_r2_Wcb_loose  = ak.Array([process_jets_between_b2_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(loose_a, loose_b  , candidate_fatjets)])
+delta_r2_Wcb_ideal  = ak.Array([process_jets_between_b2_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(ideal_a, ideal_b  , candidate_fatjets)])
+
+delta_eta_tight       = ak.Array([process_jets_deta(jet1, jet2) for jet1, jet2 in zip(tight_a, tight_b  )])
+delta_eta_medium      = ak.Array([process_jets_deta(jet1, jet2) for jet1, jet2 in zip(medium_a, medium_b)])
+delta_eta_loose       = ak.Array([process_jets_deta(jet1, jet2) for jet1, jet2 in zip(loose_a, loose_b  )])
+delta_eta_ideal       = ak.Array([process_jets_deta(jet1, jet2) for jet1, jet2 in zip(ideal_a, ideal_b  )])
+
+delta_prod_eta_tight  = ak.Array([process_jets_product_eta(jet1, jet2) for jet1, jet2 in zip(tight_a, tight_b  )])
+delta_prod_eta_medium = ak.Array([process_jets_product_eta(jet1, jet2) for jet1, jet2 in zip(medium_a, medium_b)])
+delta_prod_eta_loose  = ak.Array([process_jets_product_eta(jet1, jet2) for jet1, jet2 in zip(loose_a, loose_b  )])
+delta_prod_eta_ideal  = ak.Array([process_jets_product_eta(jet1, jet2) for jet1, jet2 in zip(ideal_a, ideal_b  )])
 
 # output_file = "/data/bond/zhaoyz/Pheno/slimmedtree/slim_" + delphes_roots["TTbar_semilep"].split("/")[-1] 
 output_file = options.outfile
@@ -473,6 +637,31 @@ with uproot.recreate(output_file) as root_file:
         "n_b_loose" : np.array(n_b_loose),
         "n_b_ideal" : np.array(n_b_ideal),
         
+        "delta_r_tight" : np.array(delta_r_tight),
+        "delta_r_medium" : np.array(delta_r_medium),
+        "delta_r_loose" : np.array(delta_r_loose),
+        "delta_r_ideal" : np.array(delta_r_ideal),      
+        
+        "delta_r1_Wcb_tight" : np.array(delta_r1_Wcb_tight ),
+        "delta_r1_Wcb_medium": np.array(delta_r1_Wcb_medium),
+        "delta_r1_Wcb_loose" : np.array(delta_r1_Wcb_loose ),
+        "delta_r1_Wcb_ideal" : np.array(delta_r1_Wcb_ideal ),       
+              
+        "delta_r2_Wcb_tight" : np.array(delta_r2_Wcb_tight ),
+        "delta_r2_Wcb_medium": np.array(delta_r2_Wcb_medium),
+        "delta_r2_Wcb_loose" : np.array(delta_r2_Wcb_loose ),
+        "delta_r2_Wcb_ideal" : np.array(delta_r2_Wcb_ideal ),       
+        
+        "delta_eta_tight"  :  np.array(delta_eta_tight),  
+        "delta_eta_medium" :  np.array(delta_eta_medium),  
+        "delta_eta_loose"  :  np.array(delta_eta_loose),  
+        "delta_eta_ideal"  :  np.array(delta_eta_ideal),  
+
+        "delta_prod_eta_tight" : np.array(delta_prod_eta_tight),
+        "delta_prod_eta_medium": np.array(delta_prod_eta_medium),
+        "delta_prod_eta_loose" : np.array(delta_prod_eta_loose),
+        "delta_prod_eta_ideal" : np.array(delta_prod_eta_ideal),  
+          
         "top_matched_bqq" : ak.Array(np.array(match_dict["top_matched(t->bqq)"]).astype(int)),
         "top_matched_bq" : ak.Array(np.array(match_dict["top_matched(t->bq)"]).astype(int)),
         
