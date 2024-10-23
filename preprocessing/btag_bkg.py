@@ -18,7 +18,9 @@ import os
 import boost_histogram as bh
 
 from optparse import OptionParser
-
+'''
+This file is for BKG
+'''
 plot_dir = "../plots/tagger/18Aug2024"
 _ = os.system(f"mkdir -p {plot_dir}")
 
@@ -249,139 +251,6 @@ H_PDGID = 25
 deltaR = 0.8
 
 
-
-# finding the two gen tops
-
-tops = events.Particle[
-    (abs(events.Particle.PID) == TOP_PDGID) * (events.Particle.Status == 62)
-]
-
-
-# collect all bs
-bs = events.Particle[tops.D2]
-
-
-
-# find the last W index
-
-def find_last_position(arr, value):
-    mask = (arr == value)
-    reversed_mask = mask[:, ::-1]
-    reversed_positions = ak.argmax(reversed_mask, axis=1)
-    lengths = ak.num(arr, axis=1)
-    positions = lengths - 1 - reversed_positions
-    return positions
-
-
-
-
-pos_w_plus = find_last_position(events.Particle.PID, 24)
-pos_w_plus
-
-
-
-pos_w_minus = find_last_position(events.Particle.PID, -24)
-pos_w_minus
-
-
-#last copy W position
-w_index_array = ak.Array(ak.Array([pos_w_plus, pos_w_minus]).to_numpy().T)
-
-
-# In[95]:
-
-
-# collect last copy W
-ws = events.Particle[ak.Array([range(len(events.Particle))]).to_numpy().T, w_index_array.to_numpy()]
-
-
-# In[96]:
-
-
-# define hadronic decay W
-had_w_sel = (abs(events.Particle[ak.Array([range(len(events.Particle))]).to_numpy().T, ws.D1.to_numpy()].PID) <= 5)
-
-# define leptonic decay W
-lep_w_sel = (abs(events.Particle[ak.Array([range(len(events.Particle))]).to_numpy().T, ws.D1.to_numpy()].PID) > 6)
-
-# In[97]:
-
-
-# collect all hadronic decay W in all events
-had_ws = ws[had_w_sel]
-lep_ws = ws[lep_w_sel]
-
-
-# In[98]:
-
-
-# collect hadronic W's daughter
-had_ws_D1 = ak.flatten(events.Particle[ak.singletons(had_ws.D1)], axis = 1)
-had_ws_D2 = ak.flatten(events.Particle[ak.singletons(had_ws.D2)], axis = 1)
-
-
-# In[99]:
-
-
-had_ws_D1_match = (delta_r(had_ws_D1,candidate_fatjets) < deltaR)
-had_ws_D2_match = (delta_r(had_ws_D2,candidate_fatjets) < deltaR)
-
-
-# In[100]:
-
-
-# W decay tag
-wcd = (( abs(had_ws_D1.PID) == 1) & (abs(had_ws_D2.PID) == 4 )) | (( abs(had_ws_D1.PID) == 4) & (abs(had_ws_D2.PID) == 1 ))
-wcs = (( abs(had_ws_D1.PID) == 3) & (abs(had_ws_D2.PID) == 4 )) | (( abs(had_ws_D1.PID) == 4) & (abs(had_ws_D2.PID) == 3 ))
-wcb = (( abs(had_ws_D1.PID) == 5) & (abs(had_ws_D2.PID) == 4 )) | (( abs(had_ws_D1.PID) == 4) & (abs(had_ws_D2.PID) == 5 ))
-
-wud = (( abs(had_ws_D1.PID) == 2) & (abs(had_ws_D2.PID) == 1 )) | (( abs(had_ws_D1.PID) == 1) & (abs(had_ws_D2.PID) == 2 ))
-wub = (( abs(had_ws_D1.PID) == 2) & (abs(had_ws_D2.PID) == 5 )) | (( abs(had_ws_D1.PID) == 5) & (abs(had_ws_D2.PID) == 2 ))
-wus = (( abs(had_ws_D1.PID) == 2) & (abs(had_ws_D2.PID) == 3 )) | (( abs(had_ws_D1.PID) == 3) & (abs(had_ws_D2.PID) == 2 ))
-
-
-
-ak.sum(wcd) + ak.sum(wcs) + ak.sum(wcb) + ak.sum(wud) + ak.sum(wub) + ak.sum(wus)
-
-
-
-# collect hadronic decay tops' b(the same sign with hadronic W)
-bs_had = ak.flatten(ak.pad_none(bs[had_ws.Charge == abs(bs.PID)/bs.PID ], 1, axis = 1, clip = True), axis = 1)
-
-# collect leptonic decay tops' b(the same sign with leptonic W)
-bs_lep = ak.flatten(ak.pad_none(bs[lep_ws.Charge == abs(bs.PID)/bs.PID ], 1, axis = 1, clip = True), axis = 1)
-
-had_b_jet_match = (delta_r(bs_had,candidate_fatjets) <= deltaR)
-lep_b_jet_match = (delta_r(bs_lep,candidate_fatjets) <= deltaR)
-
-
-
-match_dict = {
-    "top_matched(t->bqq)": had_ws_D1_match * had_ws_D2_match * had_b_jet_match * ~lep_b_jet_match,
-    "top_matched(t->bq)": (had_ws_D1_match * ~had_ws_D2_match * had_b_jet_match * ~lep_b_jet_match) | (~had_ws_D1_match * had_ws_D2_match * had_b_jet_match * ~lep_b_jet_match),
-    
-    "lep.b + W_matched" : had_ws_D1_match * had_ws_D2_match * ~had_b_jet_match * lep_b_jet_match,
-    "lep.b + q_matched" : (had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match * lep_b_jet_match) | (~had_ws_D1_match * had_ws_D2_match * ~had_b_jet_match * lep_b_jet_match),
-    
-    "W_matched(W->cd)": ~lep_b_jet_match * ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcd,
-    "W_matched(W->cs)": ~lep_b_jet_match * ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcs,
-    "W_matched(W->cb)": ~lep_b_jet_match * ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcb,
-    "W_matched(W->ud)": ~lep_b_jet_match * ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wud,
-    "W_matched(W->ub)": ~lep_b_jet_match * ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wub,
-    "W_matched(W->us)": ~lep_b_jet_match * ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wus,
-    
-    "b_matched(had.t)" : ~had_ws_D1_match * ~had_ws_D2_match * had_b_jet_match * ~lep_b_jet_match,
-    "b_matched(lep.t)" : ~had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match * lep_b_jet_match,
-    
-    "bb_matched"       : ~had_ws_D1_match * ~had_ws_D2_match * had_b_jet_match * lep_b_jet_match,
-    "bb + q_matched"       : (~had_ws_D1_match * had_ws_D2_match * had_b_jet_match * lep_b_jet_match) | (had_ws_D1_match * ~had_ws_D2_match * had_b_jet_match * lep_b_jet_match),
-    "bb + W_matched"       : had_ws_D1_match * had_ws_D2_match * had_b_jet_match * lep_b_jet_match,
-    
-    "q_matched(had.W)" : (~had_ws_D1_match * had_ws_D2_match * ~had_b_jet_match * ~lep_b_jet_match) | (had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match * ~lep_b_jet_match),
-    
-    "unmatched" : ~had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match * ~lep_b_jet_match,
-}
-
 #start to compute n_b_tag
 def find_closest_SF_awkward(json_path, arr):
     with open(json_path, 'r') as json_file:
@@ -412,9 +281,6 @@ mis_tag_udsg = {
     "Medium": 0.01,
     "Loose" : 0.1,
     "Ideal" : 0,
-    
-    "Loose_1" : 0.1,
-    "Loose_2" : 0.1,
 }
 
 mis_tag_c = {
@@ -422,19 +288,12 @@ mis_tag_c = {
     "Medium": 0.13,
     "Loose" : 0.3,
     "Ideal" : 0,
-    
-    "Loose_1" : 0.45,
-    "Loose_2" : 0.22,
 }
 
 json_dir = "./json/28Aug24"
 b_tag_eff_loose =  find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_loose.json"  , arr = pT_distribution)
 b_tag_eff_medium = find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_medium.json" , arr = pT_distribution)
 b_tag_eff_tight =  find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_tight.json"  , arr = pT_distribution)
-
-b_tag_eff_loose_1 =  find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_loose.json"  , arr = pT_distribution)
-b_tag_eff_loose_2 =  () * find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_loose.json"  , arr = pT_distribution)
-
 b_tag_eff_ideal = ak.ones_like(b_tag_eff_tight)
 
 # mistag
@@ -690,7 +549,6 @@ with uproot.recreate(output_file) as root_file:
         "delta_r_min_b_Wcb_medium" : delta_r_min_b_Wcb_medium,
         "delta_r_min_b_Wcb_loose"  : delta_r_min_b_Wcb_loose ,
         "delta_r_min_b_Wcb_ideal"  : delta_r_min_b_Wcb_ideal ,
-                
         
         "delta_eta_tight"  :  np.array(delta_eta_tight),  
         "delta_eta_medium" :  np.array(delta_eta_medium),  
@@ -703,34 +561,6 @@ with uproot.recreate(output_file) as root_file:
         "delta_prod_eta_ideal" : np.array(delta_prod_eta_ideal),  
           
         "is_clean_Wcb" : ak.Array(np.array(is_clean_Wcb).astype(int)),
-        
-        "top_matched_bqq" : ak.Array(np.array(match_dict["top_matched(t->bqq)"]).astype(int)),
-        "top_matched_bq" : ak.Array(np.array(match_dict["top_matched(t->bq)"]).astype(int)),
-        
-        "lep_b_qq" : ak.Array(np.array(match_dict["lep.b + W_matched"]).astype(int)),
-        "lep_b_q" : ak.Array(np.array(match_dict["lep.b + q_matched"]).astype(int)),
-        
-        "w_matched_cd" : ak.Array(np.array(match_dict["W_matched(W->cd)"]).astype(int)),
-        "w_matched_cs" : ak.Array(np.array(match_dict["W_matched(W->cs)"]).astype(int)),
-        "w_matched_cb" : ak.Array(np.array(match_dict["W_matched(W->cb)"]).astype(int)),
-        "w_matched_ud" : ak.Array(np.array(match_dict["W_matched(W->ud)"]).astype(int)),
-        "w_matched_ub" : ak.Array(np.array(match_dict["W_matched(W->ub)"]).astype(int)),
-        "w_matched_us" : ak.Array(np.array(match_dict["W_matched(W->us)"]).astype(int)),
-        
-        "b_matched_had" : ak.Array(np.array(match_dict["b_matched(had.t)"]).astype(int)),
-        "b_matched_lep" : ak.Array(np.array(match_dict["b_matched(lep.t)"]).astype(int)),
-        
-        "bb_matched" : ak.Array(np.array(match_dict["bb_matched"]).astype(int)),
-        "bb_q" : ak.Array(np.array(match_dict["bb + q_matched"]).astype(int)),
-        "bb_qq" : ak.Array(np.array(match_dict["bb + W_matched"]).astype(int)),
-        
-        "q_matched" : ak.Array(np.array(match_dict["q_matched(had.W)"]).astype(int)),        
-        
-        "unmatched" : ak.Array(np.array(match_dict["unmatched"]).astype(int)),
-        
-        "isWcb" : ak.Array(np.array(wcb).astype(int)),
-        "lep_b_in" : ak.Array(np.array(lep_b_jet_match).astype(int)),
-        "had_b_in" : ak.Array(np.array(had_b_jet_match).astype(int)),
         "NAK8" : ak.num(events.JetPUPPIAK8.Eta, axis = 1),
         "NAK4" : ak.num(events.JetPUPPI.Eta, axis = 1),
         "hbcvsqcd" : np.array(leading_hbcvsqcd),
