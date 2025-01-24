@@ -1,0 +1,24 @@
+/home/pku/zhaoyz/anaconda3/envs/lpr/lib/python3.9/site-packages/coffea/nanoevents/mapping/uproot.py:86: UserWarning: Found duplicate branch JetPUPPI_size in <TTree 'tree' (9704 branches) at 0x7f02a9382790>, taking first instance
+  warnings.warn(
+/home/pku/zhaoyz/anaconda3/envs/lpr/lib/python3.9/site-packages/coffea/nanoevents/mapping/uproot.py:86: UserWarning: Found duplicate branch Particle_size in <TTree 'tree' (9704 branches) at 0x7f02a9382790>, taking first instance
+  warnings.warn(
+/home/pku/zhaoyz/anaconda3/envs/lpr/lib/python3.9/site-packages/coffea/nanoevents/mapping/uproot.py:86: UserWarning: Found duplicate branch JetPUPPIAK8_size in <TTree 'tree' (9704 branches) at 0x7f02a9382790>, taking first instance
+  warnings.warn(
+/home/pku/zhaoyz/anaconda3/envs/lpr/lib/python3.9/site-packages/coffea/nanoevents/mapping/uproot.py:86: UserWarning: Found duplicate branch Electron_size in <TTree 'tree' (9704 branches) at 0x7f02a9382790>, taking first instance
+  warnings.warn(
+/home/pku/zhaoyz/anaconda3/envs/lpr/lib/python3.9/site-packages/coffea/nanoevents/mapping/uproot.py:86: UserWarning: Found duplicate branch Muon_size in <TTree 'tree' (9704 branches) at 0x7f02a9382790>, taking first instance
+  warnings.warn(
+/home/pku/zhaoyz/anaconda3/envs/lpr/lib/python3.9/site-packages/coffea/nanoevents/mapping/uproot.py:86: UserWarning: Found duplicate branch PuppiMissingET_size in <TTree 'tree' (9704 branches) at 0x7f02a9382790>, taking first instance
+  warnings.warn(
+/home/pku/zhaoyz/anaconda3/envs/lpr/lib/python3.9/site-packages/coffea/nanoevents/mapping/uproot.py:86: UserWarning: Found duplicate branch MissingET_size in <TTree 'tree' (9704 branches) at 0x7f02a9382790>, taking first instance
+  warnings.warn(
+/home/pku/zhaoyz/anaconda3/envs/lpr/lib/python3.9/site-packages/awkward/_connect/_numpy.py:197: RuntimeWarning: invalid value encountered in sqrt
+  result = getattr(ufunc, method)(
+Imported!
+Loaded CustomDelphesSchema: <class 'custom.CustomDelphesSchema'>
+dR_muon [0.931, 0.0895, None, 0.982, 2.77, 1.67, ... None, None, 1.16, None, None, 3.15]
+dR_electron [None, None, 0.504, None, None, None, 3.19, ... 2.75, 3.29, 2.6, 3.08, 2.85, None]
+mass [[12.5], [91.4, 0.106], [107], [5.29, 123], ... [12.7, 4.76], [10.7], [88.6], [78.9]]
+max_tagger [0.0651, 0.0119, 0.000331, 0.0413, 0.1, ... 0.000281, 0.00801, 0.00085, 0.00755]
+max_tagger [0.1, 0.02, 0.0831, 0.00276, 0.0389, ... 0.0677, 0.000406, 0.183, 0.00085, 0.00755]
+Done transfer tree for /data/bond/zhaoyz/Pheno/ntuplizer/output_with_PUPPI/TTbar_semilep_part3_5M/ntuple_events_delphes_12.root

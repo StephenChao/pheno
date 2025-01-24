@@ -12,10 +12,15 @@ parser.add_option('--jobs')
 (options, args) = parser.parse_args()
 if options.jobs: concurrent_jobs(int(options.jobs))
 
+count = 50
+i = 0
 for file in os.listdir(options.indir):
     #naive check:
-    if file.startswith("events"):
-        cmd = f"stat {options.outdir}/slim_{file} &>/dev/null || (python gen_matching.py --infile {options.indir}/{file} --outfile {options.outdir}/slim_{file} &> outs/{file}.log)"
+    i += 1
+    # if i == count: break
+    if file.startswith("ntuple"):
+        # cmd = f"stat {options.outdir}/slim_{file} &>/dev/null || (python gen_matching.py --infile {options.indir}/{file} --outfile {options.outdir}/slim_{file} &> outs/{file}.log)"
+        cmd = f"stat {options.outdir}/slim_{file} &>/dev/null || (python btag.py --infile {options.indir}/{file} --outfile {options.outdir}/slim_{file} &> outs/{file}.log)"
         # print(f"do:{cmd}")
         if options.test:
             print(f"do:{cmd}")
@@ -23,3 +28,6 @@ for file in os.listdir(options.indir):
             submit(cmd)
             if getattr(options, 'jobs') == '1': wait()
 wait()
+
+#typical command:
+#python transfer_tree.py  --indir /data/bond/zhaoyz/Pheno/ntuplizer/output/sm/TTbar_semilep_set1_12M --outdir /data/bond/zhaoyz/Pheno/slimmedtree/sm/TTbar_semilep_set1_12M --jobs 100

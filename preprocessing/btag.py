@@ -204,24 +204,92 @@ def get_hbcvsqcd(df):
         df["qcd"] = df["qcd"] + df[f"jet_probs_{str(idx)}"]
     df["hbcvsqcd"] = df["hbc"]/(df["hbc"] + df["qcd"])
 
+import awkward as ak
+import numpy as np
+import math
+
+# 定义 delta_r 函数
+def delta_r(jet, obj):
+    deta = jet["Eta"] - obj["Eta"]  # 注意这里是通过 ["field_name"] 访问字段
+    dphi = (jet["Phi"] - obj["Phi"] + np.pi) % (2 * np.pi) - np.pi
+    return np.hypot(deta, dphi)
+
+# Step 1: 筛选与 Muon 或 Electron 的 dR > 0.8
+# Step 1: 筛选与 Muon 或 Electron 的 dR > 0.8
+def filter_dr(jets, muons, electrons):
+    # 与 Muon 的 dR
+    if ak.any(ak.num(muons) > 0):  # 检查是否有 Muon
+        cartesian_muons = ak.cartesian({"jet": jets, "muon": muons}, axis=1)
+        dR_muon = ak.min(delta_r(cartesian_muons["jet"], cartesian_muons["muon"]), axis=-1)
+    else:
+        dR_muon = None  # 如果没有 Muon，则设置为 None
+
+    print("dR_muon",dR_muon)
+    # 与 Electron 的 dR
+    if ak.any(ak.num(electrons) > 0):  # 检查是否有 Electron
+        cartesian_electrons = ak.cartesian({"jet": jets, "electron": electrons}, axis=1)
+        dR_electron = ak.min(delta_r(cartesian_electrons["jet"], cartesian_electrons["electron"]), axis=-1)
+    else:
+        dR_electron = None  # 如果没有 Electron，则设置为 None
+    print("dR_electron",dR_electron)
+    
+    # 筛选逻辑：取最小的非 None 值，并判断是否 > 0.8
+    if dR_muon is None and dR_electron is not None:
+        return dR_electron > 0.8
+    elif dR_electron is None and dR_muon is not None:
+        return dR_muon > 0.8
+    elif dR_muon is not None and dR_electron is not None:
+        return ak.min([dR_muon, dR_electron], axis=0) > 0.8
+    else:
+        # 如果 muon 和 electron 都是 None，则返回 False
+        return ak.full_like(jets.Phi, False)
+
+# Step 2: 筛选 Jet 的 soft drop mass > 50
+def filter_mass(jet):
+    print("mass",jet.SoftDroppedP4_5[..., 0].mass)
+    return jet.SoftDroppedP4_5[..., 0].mass > 50
+
+# Step 3: 筛选当前事例中 tagger 值最大的 Jet
+def filter_tagger(tagger):
+    
+    max_tagger = ak.max(tagger, axis=-1)
+    print("max_tagger",max_tagger)
+    return tagger == max_tagger
+
+# 综合所有条件
+def filter_jets(jets, muons, electrons,tagger):
+    # 条件 1: dR > 0.8
+    dr_mask = filter_dr(jets, muons, electrons)
+    # 条件 2: soft drop mass > 50
+    mass_mask = filter_mass(jets)
+    # 条件 3: tagger 是当前事例中最大值
+    tagger_mask = filter_tagger(tagger)
+    # 综合所有条件
+    combined_mask = dr_mask & mass_mask & tagger_mask
+    return jets[combined_mask]
+
+# 示例使用
+# 假设你已经有 `jets`, `muons`, `electrons` 数据
+filtered_jets = filter_jets(events["JetPUPPIAK8"], events["Muon"], events["Electron"], events[f"jet_probs_{str(index_hbc)}"])
+
+# 输出结果
+# print(filtered_jets)
+
+non_empty_mask = ak.fill_none((ak.num(filtered_jets, axis=1) > 0), False)
+
+candidate_fatjets = filtered_jets[non_empty_mask][:,0]
+candidate_fatjets.SoftDroppedP4_5[...,0].mass
+
+events = events[non_empty_mask]
+
+leading_tagger_indices = filter_tagger(events[f"jet_probs_{str(index_hbc)}"])
 
 
-#compute tagger score
-leading_tagger = np.max(events[f"jet_probs_{str(index_hbc)}"],axis = 1) #leading tagger score
-leading_tagger_indices = (events[f"jet_probs_{str(index_hbc)}"] == leading_tagger)
-
-#order other object
 get_hbcvsqcd(events)
 leading_hbc = events[f"jet_probs_{str(index_hbc)}"][leading_tagger_indices][:,0]
 leading_hbcvsqcd = events["hbcvsqcd"][leading_tagger_indices][:,0]
 leading_qcd = events["qcd"][leading_tagger_indices][:,0]
 leading_hbq = events[f"jet_probs_{str(index_hbq)}"][leading_tagger_indices][:,0]
-#currently top not available
-
-#candidate jet is the jet with leading Hbc tagger
-leading_fatjet = events.JetPUPPIAK8[leading_tagger_indices][:,0]
-candidate_fatjets = leading_fatjet
-
 # ### jet matching
 
 
@@ -431,19 +499,22 @@ json_dir = "./json/28Aug24"
 b_tag_eff_loose =  find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_loose.json"  , arr = pT_distribution)
 b_tag_eff_medium = find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_medium.json" , arr = pT_distribution)
 b_tag_eff_tight =  find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_tight.json"  , arr = pT_distribution)
-
 b_tag_eff_loose_1 =  find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_loose.json"  , arr = pT_distribution)
-b_tag_eff_loose_2 =  () * find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_loose.json"  , arr = pT_distribution)
+b_tag_eff_loose_2 =  (0.91 / 0.96) * find_closest_SF_awkward(json_path=f"{json_dir}/b_tag_eff_loose.json"  , arr = pT_distribution)
 
 b_tag_eff_ideal = ak.ones_like(b_tag_eff_tight)
 
 # mistag
-mistag_bvsl_loose  = mis_tag_udsg["Loose"]  * ak.ones_like(b_tag_eff_ideal)
+mistag_bvsl_loose    = mis_tag_udsg["Loose"]  * ak.ones_like(b_tag_eff_ideal)
+mistag_bvsl_loose_1  = mis_tag_udsg["Loose_1"]  * ak.ones_like(b_tag_eff_ideal)
+mistag_bvsl_loose_2  = mis_tag_udsg["Loose_2"]  * ak.ones_like(b_tag_eff_ideal)
 mistag_bvsl_medium = mis_tag_udsg["Medium"] * ak.ones_like(b_tag_eff_ideal)
 mistag_bvsl_tight  = mis_tag_udsg["Tight"]  * ak.ones_like(b_tag_eff_ideal)
 mistag_bvsl_ideal  = mis_tag_udsg["Ideal"]  * ak.ones_like(b_tag_eff_ideal)
 
 mistag_bvsc_loose  = mis_tag_c["Loose"]  * ak.ones_like(b_tag_eff_ideal)
+mistag_bvsc_loose_1  = mis_tag_c["Loose_1"]  * ak.ones_like(b_tag_eff_ideal)
+mistag_bvsc_loose_2  = mis_tag_c["Loose_2"]  * ak.ones_like(b_tag_eff_ideal)
 mistag_bvsc_medium = mis_tag_c["Medium"] * ak.ones_like(b_tag_eff_ideal)
 mistag_bvsc_tight  = mis_tag_c["Tight"]  * ak.ones_like(b_tag_eff_ideal)
 mistag_bvsc_ideal  = mis_tag_c["Ideal"]  * ak.ones_like(b_tag_eff_ideal)
@@ -461,16 +532,22 @@ def compare_awkward_arrays(arr, arr2):
 b_tag_tight  = compare_awkward_arrays(b_tag_eff_tight,  b_tag_eff_random)
 b_tag_medium = compare_awkward_arrays(b_tag_eff_medium, b_tag_eff_random)
 b_tag_loose  = compare_awkward_arrays(b_tag_eff_loose,  b_tag_eff_random)
+b_tag_loose_1  = compare_awkward_arrays(b_tag_eff_loose_1,  b_tag_eff_random)
+b_tag_loose_2  = compare_awkward_arrays(b_tag_eff_loose_2,  b_tag_eff_random)
 b_tag_ideal  = compare_awkward_arrays(b_tag_eff_ideal,  b_tag_eff_random)
 
 mis_tag_udsg_tight  = compare_awkward_arrays(mistag_bvsl_tight  ,  mistag_eff_random)
 mis_tag_udsg_medium = compare_awkward_arrays(mistag_bvsl_medium ,  mistag_eff_random)
 mis_tag_udsg_loose  = compare_awkward_arrays(mistag_bvsl_loose  ,  mistag_eff_random)
+mis_tag_udsg_loose_1  = compare_awkward_arrays(mistag_bvsl_loose_1  ,  mistag_eff_random)
+mis_tag_udsg_loose_2  = compare_awkward_arrays(mistag_bvsl_loose_2  ,  mistag_eff_random)
 mis_tag_udsg_ideal  = compare_awkward_arrays(mistag_bvsl_ideal  ,  mistag_eff_random)
 
 mis_tag_c_tight  = compare_awkward_arrays(mistag_bvsc_tight   ,  mistag_eff_random)
 mis_tag_c_medium = compare_awkward_arrays(mistag_bvsc_medium  ,  mistag_eff_random)
 mis_tag_c_loose  = compare_awkward_arrays(mistag_bvsc_loose   ,  mistag_eff_random)
+mis_tag_c_loose_1  = compare_awkward_arrays(mistag_bvsc_loose_1   ,  mistag_eff_random)
+mis_tag_c_loose_2  = compare_awkward_arrays(mistag_bvsc_loose_2   ,  mistag_eff_random)
 mis_tag_c_ideal  = compare_awkward_arrays(mistag_bvsc_ideal   ,  mistag_eff_random)
 
 
@@ -482,13 +559,13 @@ c_tag_gen      = ak.values_astype((events["JetPUPPI"].Flavor ==  c_PDGID), int)
 light_tag_gen  = ak.values_astype((events["JetPUPPI"].Flavor !=  b_PDGID) & ((events["JetPUPPI"].Flavor !=  c_PDGID)), int)
 
 #clean
-dr_AK8_cand_mu = delta_r(candidate_fatjets, files["TTbar_semilep"]["Muon"])
-dr_AK8_cand_ele = delta_r(candidate_fatjets, files["TTbar_semilep"]["Electron"])
-condition_mu  = ak.all(dr_AK8_cand_mu > 0.8, axis=1) | (ak.is_none(dr_AK8_cand_mu))
-condition_ele = ak.all(dr_AK8_cand_ele > 0.8, axis=1) | (ak.is_none(dr_AK8_cand_ele))
+# dr_AK8_cand_mu = delta_r(candidate_fatjets, files["TTbar_semilep"]["Muon"])
+# dr_AK8_cand_ele = delta_r(candidate_fatjets, files["TTbar_semilep"]["Electron"])
+# condition_mu  = ak.all(dr_AK8_cand_mu > 0.8, axis=1) | (ak.is_none(dr_AK8_cand_mu))
+# condition_ele = ak.all(dr_AK8_cand_ele > 0.8, axis=1) | (ak.is_none(dr_AK8_cand_ele))
 
-# 通过逻辑 OR 运算得到满足条件的索引布尔数组
-is_clean_Wcb = condition_mu & condition_ele
+# # 通过逻辑 OR 运算得到满足条件的索引布尔数组
+# is_clean_Wcb = condition_mu & condition_ele
 # is_clean_Wcb
 
 dr_AK8_cand_AK4_all = delta_r(candidate_fatjets,events["JetPUPPI"])
@@ -503,32 +580,44 @@ b_exclusive = ak.values_astype((dr_AK8_cand_AK4_all > 0.8), int)
 b_tag_tight_truth =  b_exclusive * b_tag_gen * b_tag_tight
 b_tag_medium_truth = b_exclusive * b_tag_gen * b_tag_medium
 b_tag_loose_truth =  b_exclusive * b_tag_gen * b_tag_loose
+b_tag_loose_1_truth =  b_exclusive * b_tag_gen * b_tag_loose_1
+b_tag_loose_2_truth =  b_exclusive * b_tag_gen * b_tag_loose_2
 b_tag_ideal_truth =  b_exclusive * b_tag_gen * b_tag_ideal
 
 # mis-tag
 c_mis_tag_tight_truth  =  b_exclusive * c_tag_gen * mis_tag_c_tight 
 c_mis_tag_medium_truth =  b_exclusive * c_tag_gen * mis_tag_c_medium
 c_mis_tag_loose_truth  =  b_exclusive * c_tag_gen * mis_tag_c_loose 
+c_mis_tag_loose_1_truth  =  b_exclusive * c_tag_gen * mis_tag_c_loose_1 
+c_mis_tag_loose_2_truth  =  b_exclusive * c_tag_gen * mis_tag_c_loose_2 
 c_mis_tag_ideal_truth  =  b_exclusive * c_tag_gen * mis_tag_c_ideal 
 
 light_mis_tag_tight_truth  =  b_exclusive * light_tag_gen * mis_tag_udsg_tight 
 light_mis_tag_medium_truth =  b_exclusive * light_tag_gen * mis_tag_udsg_medium
 light_mis_tag_loose_truth  =  b_exclusive * light_tag_gen * mis_tag_udsg_loose 
+light_mis_tag_loose_1_truth  =  b_exclusive * light_tag_gen * mis_tag_udsg_loose_1 
+light_mis_tag_loose_2_truth  =  b_exclusive * light_tag_gen * mis_tag_udsg_loose_2 
 light_mis_tag_ideal_truth  =  b_exclusive * light_tag_gen * mis_tag_udsg_ideal 
 
 tight_tagged_b_jet_idx  = b_tag_tight_truth  + c_mis_tag_tight_truth  + light_mis_tag_tight_truth
 medium_tagged_b_jet_idx = b_tag_medium_truth + c_mis_tag_medium_truth + light_mis_tag_medium_truth
 loose_tagged_b_jet_idx  = b_tag_loose_truth  + c_mis_tag_loose_truth  + light_mis_tag_loose_truth
+loose_1_tagged_b_jet_idx  = b_tag_loose_1_truth  + c_mis_tag_loose_1_truth  + light_mis_tag_loose_1_truth
+loose_2_tagged_b_jet_idx  = b_tag_loose_2_truth  + c_mis_tag_loose_2_truth  + light_mis_tag_loose_2_truth
 ideal_tagged_b_jet_idx  = b_tag_ideal_truth  + c_mis_tag_ideal_truth  + light_mis_tag_ideal_truth
 
 n_b_tight = ak.sum(b_tag_tight_truth, axis = 1)
 n_b_medium = ak.sum(b_tag_medium_truth, axis = 1)
 n_b_loose = ak.sum(b_tag_loose_truth, axis = 1)
+n_b_loose_1 = ak.sum(b_tag_loose_1_truth, axis = 1)
+n_b_loose_2 = ak.sum(b_tag_loose_2_truth, axis = 1)
 n_b_ideal = ak.sum(b_tag_ideal_truth, axis = 1)
 
 has_two_tight_b =  (n_b_tight == 2)
 has_two_medium_b = (n_b_medium == 2)
 has_two_loose_b =  (n_b_loose == 2)
+has_two_loose_1_b =  (n_b_loose_1 == 2)
+has_two_loose_2_b =  (n_b_loose_2 == 2)
 has_two_ideal_b =  (n_b_ideal == 2)
 
 def get_two_b_jet(JetArr, tagged_b_jet_idx, has_two_b):
@@ -572,6 +661,8 @@ JetArr = events["JetPUPPI"]
 tight_a, tight_b   = get_two_b_jet(JetArr,   tight_tagged_b_jet_idx, has_two_tight_b)
 medium_a, medium_b = get_two_b_jet(JetArr, medium_tagged_b_jet_idx, has_two_medium_b)
 loose_a, loose_b   = get_two_b_jet(JetArr, loose_tagged_b_jet_idx, has_two_loose_b )
+loose_1_a, loose_1_b   = get_two_b_jet(JetArr, loose_1_tagged_b_jet_idx, has_two_loose_1_b )
+loose_2_a, loose_2_b   = get_two_b_jet(JetArr, loose_2_tagged_b_jet_idx, has_two_loose_2_b )
 ideal_a, ideal_b   = get_two_b_jet(JetArr, ideal_tagged_b_jet_idx, has_two_ideal_b )
 
 def process_jets(jet1, jet2):
@@ -617,37 +708,51 @@ def process_jets_product_eta(jet1, jet2):
 delta_r_tight  = ak.Array([process_jets(jet1, jet2) for jet1, jet2 in zip(tight_a, tight_b)])
 delta_r_medium = ak.Array([process_jets(jet1, jet2) for jet1, jet2 in zip(medium_a, medium_b)])
 delta_r_loose  = ak.Array([process_jets(jet1, jet2) for jet1, jet2 in zip(loose_a, loose_b  )])
+delta_r_loose_1  = ak.Array([process_jets(jet1, jet2) for jet1, jet2 in zip(loose_1_a, loose_1_b  )])
+delta_r_loose_2  = ak.Array([process_jets(jet1, jet2) for jet1, jet2 in zip(loose_2_a, loose_2_b  )])
 delta_r_ideal  = ak.Array([process_jets(jet1, jet2) for jet1, jet2 in zip(ideal_a, ideal_b  )])
 
 delta_r1_Wcb_tight  = ak.Array([process_jets_between_b1_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(tight_a, tight_b  , candidate_fatjets)])
 delta_r1_Wcb_medium = ak.Array([process_jets_between_b1_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(medium_a, medium_b, candidate_fatjets)])
 delta_r1_Wcb_loose  = ak.Array([process_jets_between_b1_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(loose_a, loose_b  , candidate_fatjets)])
+delta_r1_Wcb_loose_1  = ak.Array([process_jets_between_b1_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(loose_1_a, loose_1_b  , candidate_fatjets)])
+delta_r1_Wcb_loose_2  = ak.Array([process_jets_between_b1_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(loose_2_a, loose_2_b  , candidate_fatjets)])
 delta_r1_Wcb_ideal  = ak.Array([process_jets_between_b1_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(ideal_a, ideal_b  , candidate_fatjets)])
 
 delta_r2_Wcb_tight  = ak.Array([process_jets_between_b2_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(tight_a, tight_b  , candidate_fatjets)])
 delta_r2_Wcb_medium = ak.Array([process_jets_between_b2_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(medium_a, medium_b, candidate_fatjets)])
 delta_r2_Wcb_loose  = ak.Array([process_jets_between_b2_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(loose_a, loose_b  , candidate_fatjets)])
+delta_r2_Wcb_loose_1  = ak.Array([process_jets_between_b2_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(loose_1_a, loose_1_b  , candidate_fatjets)])
+delta_r2_Wcb_loose_2  = ak.Array([process_jets_between_b2_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(loose_2_a, loose_2_b  , candidate_fatjets)])
 delta_r2_Wcb_ideal  = ak.Array([process_jets_between_b2_Wcb(jet1, jet2, Wcb) for jet1, jet2, Wcb in zip(ideal_a, ideal_b  , candidate_fatjets)])
 
 delta_eta_tight       = ak.Array([process_jets_deta(jet1, jet2) for jet1, jet2 in zip(tight_a, tight_b  )])
 delta_eta_medium      = ak.Array([process_jets_deta(jet1, jet2) for jet1, jet2 in zip(medium_a, medium_b)])
 delta_eta_loose       = ak.Array([process_jets_deta(jet1, jet2) for jet1, jet2 in zip(loose_a, loose_b  )])
+delta_eta_loose_1       = ak.Array([process_jets_deta(jet1, jet2) for jet1, jet2 in zip(loose_1_a, loose_1_b  )])
+delta_eta_loose_2       = ak.Array([process_jets_deta(jet1, jet2) for jet1, jet2 in zip(loose_2_a, loose_2_b  )])
 delta_eta_ideal       = ak.Array([process_jets_deta(jet1, jet2) for jet1, jet2 in zip(ideal_a, ideal_b  )])
 
 delta_prod_eta_tight  = ak.Array([process_jets_product_eta(jet1, jet2) for jet1, jet2 in zip(tight_a, tight_b  )])
 delta_prod_eta_medium = ak.Array([process_jets_product_eta(jet1, jet2) for jet1, jet2 in zip(medium_a, medium_b)])
 delta_prod_eta_loose  = ak.Array([process_jets_product_eta(jet1, jet2) for jet1, jet2 in zip(loose_a, loose_b  )])
+delta_prod_eta_loose_1  = ak.Array([process_jets_product_eta(jet1, jet2) for jet1, jet2 in zip(loose_1_a, loose_1_b  )])
+delta_prod_eta_loose_2  = ak.Array([process_jets_product_eta(jet1, jet2) for jet1, jet2 in zip(loose_2_a, loose_2_b  )])
 delta_prod_eta_ideal  = ak.Array([process_jets_product_eta(jet1, jet2) for jet1, jet2 in zip(ideal_a, ideal_b  )])
 
 # maximum and minumum
 delta_r_max_b_Wcb_tight   = np.maximum(delta_r1_Wcb_tight  , delta_r2_Wcb_tight )
 delta_r_max_b_Wcb_medium  = np.maximum(delta_r1_Wcb_medium , delta_r2_Wcb_medium)
 delta_r_max_b_Wcb_loose   = np.maximum(delta_r1_Wcb_loose  , delta_r2_Wcb_loose )
+delta_r_max_b_Wcb_loose_1   = np.maximum(delta_r1_Wcb_loose_1  , delta_r2_Wcb_loose_1 )
+delta_r_max_b_Wcb_loose_2   = np.maximum(delta_r1_Wcb_loose_2  , delta_r2_Wcb_loose_2 )
 delta_r_max_b_Wcb_ideal   = np.maximum(delta_r1_Wcb_ideal  , delta_r2_Wcb_ideal )
 
 delta_r_min_b_Wcb_tight   = np.minimum(delta_r1_Wcb_tight  , delta_r2_Wcb_tight )
 delta_r_min_b_Wcb_medium  = np.minimum(delta_r1_Wcb_medium , delta_r2_Wcb_medium)
 delta_r_min_b_Wcb_loose   = np.minimum(delta_r1_Wcb_loose  , delta_r2_Wcb_loose )
+delta_r_min_b_Wcb_loose_1   = np.minimum(delta_r1_Wcb_loose_1  , delta_r2_Wcb_loose_1 )
+delta_r_min_b_Wcb_loose_2   = np.minimum(delta_r1_Wcb_loose_2  , delta_r2_Wcb_loose_2 )
 delta_r_min_b_Wcb_ideal   = np.minimum(delta_r1_Wcb_ideal  , delta_r2_Wcb_ideal )
 
 # output_file = "/data/bond/zhaoyz/Pheno/slimmedtree/slim_" + delphes_roots["TTbar_semilep"].split("/")[-1] 
@@ -664,45 +769,61 @@ with uproot.recreate(output_file) as root_file:
         "n_b_tight" : np.array(n_b_tight),
         "n_b_medium" : np.array(n_b_medium),
         "n_b_loose" : np.array(n_b_loose),
+        "n_b_loose_1" : np.array(n_b_loose_1),
+        "n_b_loose_2" : np.array(n_b_loose_2),
         "n_b_ideal" : np.array(n_b_ideal),
         
         "delta_r_tight" : np.array(delta_r_tight),
         "delta_r_medium" : np.array(delta_r_medium),
         "delta_r_loose" : np.array(delta_r_loose),
+        "delta_r_loose_1" : np.array(delta_r_loose_1),
+        "delta_r_loose_2" : np.array(delta_r_loose_2),
         "delta_r_ideal" : np.array(delta_r_ideal),      
         
         "delta_r1_Wcb_tight" : np.array(delta_r1_Wcb_tight ),
         "delta_r1_Wcb_medium": np.array(delta_r1_Wcb_medium),
         "delta_r1_Wcb_loose" : np.array(delta_r1_Wcb_loose ),
+        "delta_r1_Wcb_loose_1" : np.array(delta_r1_Wcb_loose_1 ),
+        "delta_r1_Wcb_loose_2" : np.array(delta_r1_Wcb_loose_2 ),
         "delta_r1_Wcb_ideal" : np.array(delta_r1_Wcb_ideal ),       
               
         "delta_r2_Wcb_tight" : np.array(delta_r2_Wcb_tight ),
         "delta_r2_Wcb_medium": np.array(delta_r2_Wcb_medium),
         "delta_r2_Wcb_loose" : np.array(delta_r2_Wcb_loose ),
+        "delta_r2_Wcb_loose_1" : np.array(delta_r2_Wcb_loose_1 ),
+        "delta_r2_Wcb_loose_2" : np.array(delta_r2_Wcb_loose_2 ),
         "delta_r2_Wcb_ideal" : np.array(delta_r2_Wcb_ideal ),    
            
         "delta_r_max_b_Wcb_tight"  : delta_r_max_b_Wcb_tight ,
         "delta_r_max_b_Wcb_medium" : delta_r_max_b_Wcb_medium,
         "delta_r_max_b_Wcb_loose"  : delta_r_max_b_Wcb_loose ,
+        "delta_r_max_b_Wcb_loose_1"  : delta_r_max_b_Wcb_loose_1 ,
+        "delta_r_max_b_Wcb_loose_2"  : delta_r_max_b_Wcb_loose_2 ,
         "delta_r_max_b_Wcb_ideal"  : delta_r_max_b_Wcb_ideal ,
 
         "delta_r_min_b_Wcb_tight"  : delta_r_min_b_Wcb_tight ,
         "delta_r_min_b_Wcb_medium" : delta_r_min_b_Wcb_medium,
         "delta_r_min_b_Wcb_loose"  : delta_r_min_b_Wcb_loose ,
+        "delta_r_min_b_Wcb_loose_1"  : delta_r_min_b_Wcb_loose_1 ,
+        "delta_r_min_b_Wcb_loose_2"  : delta_r_min_b_Wcb_loose_2 ,
         "delta_r_min_b_Wcb_ideal"  : delta_r_min_b_Wcb_ideal ,
                 
         
         "delta_eta_tight"  :  np.array(delta_eta_tight),  
         "delta_eta_medium" :  np.array(delta_eta_medium),  
         "delta_eta_loose"  :  np.array(delta_eta_loose),  
+        "delta_eta_loose_1"  :  np.array(delta_eta_loose_1),  
+        "delta_eta_loose_2"  :  np.array(delta_eta_loose_2),  
         "delta_eta_ideal"  :  np.array(delta_eta_ideal),  
 
         "delta_prod_eta_tight" : np.array(delta_prod_eta_tight),
         "delta_prod_eta_medium": np.array(delta_prod_eta_medium),
         "delta_prod_eta_loose" : np.array(delta_prod_eta_loose),
+        "delta_prod_eta_loose_1" : np.array(delta_prod_eta_loose_1),
+        "delta_prod_eta_loose_2" : np.array(delta_prod_eta_loose_2),
         "delta_prod_eta_ideal" : np.array(delta_prod_eta_ideal),  
           
-        "is_clean_Wcb" : ak.Array(np.array(is_clean_Wcb).astype(int)),
+        # "is_clean_Wcb" : ak.Array(np.array(is_clean_Wcb).astype(int)),
         
         "top_matched_bqq" : ak.Array(np.array(match_dict["top_matched(t->bqq)"]).astype(int)),
         "top_matched_bq" : ak.Array(np.array(match_dict["top_matched(t->bq)"]).astype(int)),

@@ -1,3 +1,0 @@
-/home/pku/zhaoyz/anaconda3/envs/lpr/lib/python3.9/site-packages/awkward/_connect/_numpy.py:197: RuntimeWarning: invalid value encountered in sqrt
-  result = getattr(ufunc, method)(
-Done transfer tree for /data/bond/zhaoyz/Pheno/ttbar_Wcb/TTbar_semilep_set_2/events_delphes_393.root

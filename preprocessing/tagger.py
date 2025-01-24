@@ -107,11 +107,10 @@ labels = [
 ]
 
 index_hbc = labels.index("H_bc")
+index_hbq = labels.index("H_bq")
 index_hbb = labels.index("H_bb")
 index_hcc = labels.index("H_cc")
 index_qcd_start = labels.index("QCD_bbccss")
-
-
 
 # use leading pT jet first, anyway we will only select one AK8 jet in the end
 def pad_val(
@@ -206,22 +205,22 @@ def get_hbcvsqcd(df):
     df["hbcvsqcd"] = df["hbc"]/(df["hbc"] + df["qcd"])
 
 
+
 #compute tagger score
 leading_tagger = np.max(events[f"jet_probs_{str(index_hbc)}"],axis = 1) #leading tagger score
 leading_tagger_indices = (events[f"jet_probs_{str(index_hbc)}"] == leading_tagger)
 
 #order other object
-leading_hbc = events[f"jet_probs_{str(index_hbc)}"][leading_tagger_indices][:,0]
 get_hbcvsqcd(events)
+leading_hbc = events[f"jet_probs_{str(index_hbc)}"][leading_tagger_indices][:,0]
 leading_hbcvsqcd = events["hbcvsqcd"][leading_tagger_indices][:,0]
+leading_qcd = events["qcd"][leading_tagger_indices][:,0]
+leading_hbq = events[f"jet_probs_{str(index_hbq)}"][leading_tagger_indices][:,0]
 #currently top not available
 
 #candidate jet is the jet with leading Hbc tagger
 leading_fatjet = events.JetPUPPIAK8[leading_tagger_indices][:,0]
 candidate_fatjets = leading_fatjet
-
-
-
 
 # ### jet matching
 
@@ -302,12 +301,15 @@ ws = events.Particle[ak.Array([range(len(events.Particle))]).to_numpy().T, w_ind
 # define hadronic decay W
 had_w_sel = (abs(events.Particle[ak.Array([range(len(events.Particle))]).to_numpy().T, ws.D1.to_numpy()].PID) <= 5)
 
+# define leptonic decay W
+lep_w_sel = (abs(events.Particle[ak.Array([range(len(events.Particle))]).to_numpy().T, ws.D1.to_numpy()].PID) > 6)
 
 # In[97]:
 
 
 # collect all hadronic decay W in all events
 had_ws = ws[had_w_sel]
+lep_ws = ws[lep_w_sel]
 
 
 # In[98]:
@@ -346,25 +348,38 @@ ak.sum(wcd) + ak.sum(wcs) + ak.sum(wcb) + ak.sum(wud) + ak.sum(wub) + ak.sum(wus
 # collect hadronic decay tops' b(the same sign with hadronic W)
 bs_had = ak.flatten(ak.pad_none(bs[had_ws.Charge == abs(bs.PID)/bs.PID ], 1, axis = 1, clip = True), axis = 1)
 
+# collect leptonic decay tops' b(the same sign with leptonic W)
+bs_lep = ak.flatten(ak.pad_none(bs[lep_ws.Charge == abs(bs.PID)/bs.PID ], 1, axis = 1, clip = True), axis = 1)
 
-
-had_b_jet_match = (delta_r(bs_had,candidate_fatjets) < deltaR)
-
+had_b_jet_match = (delta_r(bs_had,candidate_fatjets) <= deltaR)
+lep_b_jet_match = (delta_r(bs_lep,candidate_fatjets) <= deltaR)
 
 
 
 match_dict = {
-    "top_matched(t->bqq)": had_ws_D1_match * had_ws_D2_match * had_b_jet_match,
-    "top_matched(t->bq)": (had_ws_D1_match * ~had_ws_D2_match * had_b_jet_match) | (~had_ws_D1_match * had_ws_D2_match * had_b_jet_match),
-    "W_matched(W->cd)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcd,
-    "W_matched(W->cs)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcs,
-    "W_matched(W->cb)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcb,
-    "W_matched(W->ud)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wud,
-    "W_matched(W->ub)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wub,
-    "W_matched(W->us)": ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wus,
-    "b_matched(had.t)" : ~had_ws_D1_match * ~had_ws_D2_match * had_b_jet_match,
-    "q_matched(had.W)" : ( ~had_ws_D1_match * had_ws_D2_match * ~had_b_jet_match) | (had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match),
-    "unmatched" : ~had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match,
+    "top_matched(t->bqq)": had_ws_D1_match * had_ws_D2_match * had_b_jet_match * ~lep_b_jet_match,
+    "top_matched(t->bq)": (had_ws_D1_match * ~had_ws_D2_match * had_b_jet_match * ~lep_b_jet_match) | (~had_ws_D1_match * had_ws_D2_match * had_b_jet_match * ~lep_b_jet_match),
+    
+    "lep.b + W_matched" : had_ws_D1_match * had_ws_D2_match * ~had_b_jet_match * lep_b_jet_match,
+    "lep.b + q_matched" : (had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match * lep_b_jet_match) | (~had_ws_D1_match * had_ws_D2_match * ~had_b_jet_match * lep_b_jet_match),
+    
+    "W_matched(W->cd)": ~lep_b_jet_match * ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcd,
+    "W_matched(W->cs)": ~lep_b_jet_match * ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcs,
+    "W_matched(W->cb)": ~lep_b_jet_match * ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wcb,
+    "W_matched(W->ud)": ~lep_b_jet_match * ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wud,
+    "W_matched(W->ub)": ~lep_b_jet_match * ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wub,
+    "W_matched(W->us)": ~lep_b_jet_match * ~had_b_jet_match * had_ws_D1_match * had_ws_D2_match * wus,
+    
+    "b_matched(had.t)" : ~had_ws_D1_match * ~had_ws_D2_match * had_b_jet_match * ~lep_b_jet_match,
+    "b_matched(lep.t)" : ~had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match * lep_b_jet_match,
+    
+    "bb_matched"       : ~had_ws_D1_match * ~had_ws_D2_match * had_b_jet_match * lep_b_jet_match,
+    "bb + q_matched"       : (~had_ws_D1_match * had_ws_D2_match * had_b_jet_match * lep_b_jet_match) | (had_ws_D1_match * ~had_ws_D2_match * had_b_jet_match * lep_b_jet_match),
+    "bb + W_matched"       : had_ws_D1_match * had_ws_D2_match * had_b_jet_match * lep_b_jet_match,
+    
+    "q_matched(had.W)" : (~had_ws_D1_match * had_ws_D2_match * ~had_b_jet_match * ~lep_b_jet_match) | (had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match * ~lep_b_jet_match),
+    
+    "unmatched" : ~had_ws_D1_match * ~had_ws_D2_match * ~had_b_jet_match * ~lep_b_jet_match,
 }
 
 
@@ -378,22 +393,40 @@ with uproot.recreate(output_file) as root_file:
         "Phi_j": np.array(candidate_fatjets.Phi),
         "Mass_j": np.array(candidate_fatjets.Mass),
         "Mass_j_sd": np.array(candidate_fatjets.SoftDroppedP4_5[...,0].mass),
+        
         "top_matched_bqq" : ak.Array(np.array(match_dict["top_matched(t->bqq)"]).astype(int)),
         "top_matched_bq" : ak.Array(np.array(match_dict["top_matched(t->bq)"]).astype(int)),
+        
+        "lep_b_qq" : ak.Array(np.array(match_dict["lep.b + W_matched"]).astype(int)),
+        "lep_b_q" : ak.Array(np.array(match_dict["lep.b + q_matched"]).astype(int)),
+        
         "w_matched_cd" : ak.Array(np.array(match_dict["W_matched(W->cd)"]).astype(int)),
         "w_matched_cs" : ak.Array(np.array(match_dict["W_matched(W->cs)"]).astype(int)),
         "w_matched_cb" : ak.Array(np.array(match_dict["W_matched(W->cb)"]).astype(int)),
         "w_matched_ud" : ak.Array(np.array(match_dict["W_matched(W->ud)"]).astype(int)),
         "w_matched_ub" : ak.Array(np.array(match_dict["W_matched(W->ub)"]).astype(int)),
         "w_matched_us" : ak.Array(np.array(match_dict["W_matched(W->us)"]).astype(int)),
-        "b_matched" : ak.Array(np.array(match_dict["b_matched(had.t)"]).astype(int)),
+        
+        "b_matched_had" : ak.Array(np.array(match_dict["b_matched(had.t)"]).astype(int)),
+        "b_matched_lep" : ak.Array(np.array(match_dict["b_matched(lep.t)"]).astype(int)),
+        
+        "bb_matched" : ak.Array(np.array(match_dict["bb_matched"]).astype(int)),
+        "bb_q" : ak.Array(np.array(match_dict["bb + q_matched"]).astype(int)),
+        "bb_qq" : ak.Array(np.array(match_dict["bb + W_matched"]).astype(int)),
+        
         "q_matched" : ak.Array(np.array(match_dict["q_matched(had.W)"]).astype(int)),        
+        
         "unmatched" : ak.Array(np.array(match_dict["unmatched"]).astype(int)),
+        
         "isWcb" : ak.Array(np.array(wcb).astype(int)),
+        "lep_b_in" : ak.Array(np.array(lep_b_jet_match).astype(int)),
+        "had_b_in" : ak.Array(np.array(had_b_jet_match).astype(int)),
         "NAK8" : ak.num(events.JetPUPPIAK8.Eta, axis = 1),
         "NAK4" : ak.num(events.JetPUPPI.Eta, axis = 1),
         "hbcvsqcd" : np.array(leading_hbcvsqcd),
         "hbc" : np.array(leading_hbc),
+        "qcd" : np.array(leading_qcd),
+        "hbq" : np.array(leading_hbq),
     }
 
 print(f"Done transfer tree for {options.infile}")
