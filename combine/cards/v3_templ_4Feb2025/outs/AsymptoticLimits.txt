@@ -1,0 +1,43 @@
+ <<< Combine >>> 
+>>> random number generator seed is 123456
+>>> method used is AsymptoticLimits
+>>> 0 out of 1 channels masked
+
+PDF didn't factorize!
+Parameters: 
+  1) RooRealVar::                            cb_bq_SF = 1.14353 +/- 0.0828582
+  2) RooRealVar::                             mask_SR = 0
+  3) RooRealVar::           n_exp_binSR_proc_b_others = 146.667
+  4) RooRealVar::  n_exp_binSR_proc_b_top_matched_bqq = 62.564
+  5) RooRealVar:: n_exp_binSR_proc_b_w_matched_others = 173.333
+  6) RooRealVar::                                   r = 0.2 +/- 2
+Obs: 
+  1) RooRealVar::     MH_Reco = 195
+  2) RooCategory:: CMS_channel = SR(idx = 0)
+
+SimNLL created with 1 channels, 0 generic constraints, 0 fast gaussian constraints, 0 fast poisson constraints, 0 fast group constraints, 
+Median for expected limits: 1.61719
+Sigma  for expected limits: 0.825111
+
+ -- AsymptoticLimits ( CLs ) --
+Expected  2.5%: r < 0.7833
+Expected 16.0%: r < 1.0895
+Expected 50.0%: r < 1.6172
+Expected 84.0%: r < 2.5197
+Expected 97.5%: r < 3.9247
+
+Done in 0.00 min (cpu), 0.00 min (real)
+Printing Message Summary From ... combine_logger.out
+----------------------------------------------
+Messages of type INFO : 8
+Messages of type DEBUG : 0
+Messages of type ERROR : 0
+----------------------------------------------
+INFO: (function: generateAsimov) ToyMCSamplerOpt.cc: 146 -- Using internal logic for binned/unbinned Asimov dataset generation
+INFO: (function: generateWithHisto) ToyMCSamplerOpt.cc: 221 -- Generating asimov with histogram for pdf pdf_binSR: in 20 x-bins
+INFO: (function: improveOnce) CascadeMinimizer.cc: 188 -- Minimisation configured with Type=Minuit2, Algo=Migrad, strategy=1, tolerance=0.1
+INFO: (function: improveOnce) CascadeMinimizer.cc: 211 -- Minimisation finished with status=0
+INFO: (function: improveOnce) CascadeMinimizer.cc: 216 -- Minimization success! status=0
+INFO: (function: generateAsimov) ToyMCSamplerOpt.cc: 146 -- Using internal logic for binned/unbinned Asimov dataset generation
+INFO: (function: generateWithHisto) ToyMCSamplerOpt.cc: 221 -- Generating asimov with histogram for pdf pdf_binSR: in 20 x-bins
+INFO: (function: runLimitExpected) AsymptoticLimits.cc: 436 -- Median for expected limits = 1.61719 (Sigma for expected limits = 0.825111)

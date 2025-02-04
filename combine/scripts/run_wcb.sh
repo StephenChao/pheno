@@ -177,7 +177,7 @@ if [ $significance = 1 ]; then
 
     # combine -M Significance -d $ws -m 125 -t -1 --expectSignal=1 --rMin -1 --rMax 5
 
-    combine -M Significance -d ${wsm}.root -t -1 --expectSignal 1 -v 9 2>&1 | tee $outsdir/Significance.txt
+    combine -M Significance -d ${wsm}.root -t -1 --expectSignal 1  2>&1 | tee $outsdir/Significance.txt
 
 fi
 

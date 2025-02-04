@@ -1,0 +1,11 @@
+# Datacard for <Channel (SR) instance at 0x7f6d8762da90> generated on 2025-02-04 14:26:01.897417
+imax 1 # number of categories ('bins' but here we are using shape templates)
+jmax 10 # number of samples minus 1
+kmax 0 # number of nuisance parameters
+shapes * SR HWWfullhad.root HWWfullhad:SR_$PROCESS HWWfullhad:SR_$PROCESS_$SYSTEMATIC
+bin SR
+observation 63.590
+bin                     SR                SR                  SR              SR        SR                 SR                SR                  SR                      SR        SR     SR
+process  s_top_matched_bqq  s_top_matched_bq  s_w_matched_others  s_w_matched_cb  s_others  b_top_matched_bqq  b_top_matched_bq  b_w_matched_others  restb_w_matched_cb_bkg  b_others  WJets
+process                 -4                -3                  -2              -1         0                  1                 2                   3                       4         5      6
+rate                 0.000             9.231               0.000          43.077     0.000             62.564           321.026             173.333                   0.000   146.667  0.000

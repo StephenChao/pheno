@@ -1,0 +1,15 @@
+Combination of SR=./SR.txt
+imax 1 number of bins
+jmax 10 number of processes minus 1
+kmax 0 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes *   SR  ./HWWfullhad.root HWWfullhad:SR_$PROCESS HWWfullhad:SR_$PROCESS_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+bin          SR   
+observation  63.59
+----------------------------------------------------------------------------------------------------------------------------------
+bin          SR                      SR                      SR                      SR                      SR                      SR                      SR                      SR                      SR                      SR                      SR                    
+process      s_top_matched_bqq       s_top_matched_bq        s_w_matched_others      s_w_matched_cb          s_others                b_top_matched_bqq       b_top_matched_bq        b_w_matched_others      restb_w_matched_cb_bkg  b_others                WJets                 
+process      -4                      -3                      -2                      -1                      0                       1                       2                       3                       4                       5                       6                     
+rate         0                       9.231                   0                       43.077                  0                       62.564                  321.026                 173.333                 0                       146.667                 0                     
+----------------------------------------------------------------------------------------------------------------------------------

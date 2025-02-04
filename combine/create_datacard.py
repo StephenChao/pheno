@@ -255,35 +255,28 @@ def fill_regions(
             logging.debug("nominal   : {nominal}".format(nominal=values_nominal))
             logging.debug("error     : {errors}".format(errors=errors_nominal))
 
-            #not used
-            if not bblite and args.mcstats:
-                # set mc stat uncs
-                logging.info("setting autoMCStats for %s in %s" % (sample_name, region))
-                # tie MC stats parameters together in blinded and "unblinded" region in nonresonant
-                region_name = region
-                stats_sample_name = f"{CMS_PARAMS_LABEL}_{region_name}_{card_name}"
-                sample.autoMCStats(
-                    sample_name=stats_sample_name,
-                    # this function uses a different threshold convention from combine
-                    threshold=np.sqrt(1 / args.mcstats_threshold),
-                    epsilon=args.epsilon,
-                )
 
             ch.addSample(sample)
 
-        # we always use bblite method
-        if bblite and args.mcstats:
-            # pass
-            # tie MC stats parameters together in blinded and "unblinded" region in nonresonant
-            channel_name = region 
-            ch.autoMCStats(
-                channel_name=f"{CMS_PARAMS_LABEL}_{channel_name}",
-                threshold=args.mcstats_threshold,
-                epsilon=args.epsilon,
-            )
 
         # data observed, not used
         ch.setObservation(region_templates["data", :])
+
+
+def alphabet_fit(
+    model: rl.Model,
+):   
+    # using SR below:
+
+    cb_bq_SF = rl.IndependentParameter("cb_bq_SF", 1.0, 0, 10)
+    Ch = model["SR"]
+
+    b_top_matched_bq = Ch["b_top_matched_bq"]
+    s_w_matched_cb = Ch["s_w_matched_cb"]
+    
+    b_top_matched_bq.setParamEffect(cb_bq_SF, 1 * cb_bq_SF)
+    s_w_matched_cb.setParamEffect(cb_bq_SF, 1 * cb_bq_SF)
+
 
 def main(args):
     #print years
@@ -327,8 +320,9 @@ def main(args):
         shape_systs_dict,
         args.bblite,
     ]
-    fit_args = [model, shape_vars,templates_summed, args.scale_templates, args.min_qcd_val]
+    fit_args = [model]
     fill_regions(*fill_args)
+    alphabet_fit(*fit_args)
     
     logging.info("rendering combine model")
 

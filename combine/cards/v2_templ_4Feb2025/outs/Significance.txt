@@ -1,0 +1,178 @@
+
+>>> random number generator seed is 123456
+>>> method used is Significance
+Adding /data/pku/home/zhaoyz/backup/CMSSW_11_3_4/src to include path
+Adding /cvmfs/cms.cern.ch/slc7_amd64_gcc900/lcg/root/6.22.08-ljfedo//include to include path
+Input workspace 'w': 
+
+RooWorkspace(w) w contents
+
+variables
+---------
+(CMS_channel,MH_Reco,mask_SR,n_exp_binSR_proc_WJets,n_exp_binSR_proc_b_others,n_exp_binSR_proc_b_top_matched_bq,n_exp_binSR_proc_b_top_matched_bqq,n_exp_binSR_proc_b_w_matched_others,n_exp_binSR_proc_restb_w_matched_cb_bkg,n_exp_binSR_proc_s_others,n_exp_binSR_proc_s_top_matched_bqq,n_exp_binSR_proc_s_w_matched_others,r,shapeBkg_b_others_SR__norm,shapeBkg_b_top_matched_bq_SR__norm,shapeBkg_b_top_matched_bqq_SR__norm,shapeBkg_b_w_matched_others_SR__norm,shapeSig_s_top_matched_bq_SR__norm,shapeSig_s_w_matched_cb_SR__norm)
+
+p.d.f.s
+-------
+RooSimultaneousOpt::model_b[ indexCat=CMS_channel SR=pdf_binSR_bonly extraConstraints=() channelMasks=(mask_SR) ] = 0.0669806
+RooSimultaneousOpt::model_s[ indexCat=CMS_channel SR=pdf_binSR extraConstraints=() channelMasks=(mask_SR) ] = 0.0623455
+RooProdPdf::nuisancePdf[  ] = 1
+RooAddPdf::pdf_binSR[ n_exp_binSR_proc_s_top_matched_bq * shapeSig_s_top_matched_bq_SRPdf + n_exp_binSR_proc_s_w_matched_cb * shapeSig_s_w_matched_cb_SRPdf + n_exp_binSR_proc_b_top_matched_bqq * shapeBkg_b_top_matched_bqq_SRPdf + n_exp_binSR_proc_b_top_matched_bq * shapeBkg_b_top_matched_bq_SRPdf + n_exp_binSR_proc_b_w_matched_others * shapeBkg_b_w_matched_others_SRPdf + n_exp_binSR_proc_b_others * shapeBkg_b_others_SRPdf ] = 0.0623455
+RooAddPdf::pdf_binSR_bonly[ n_exp_binSR_proc_b_top_matched_bqq * shapeBkg_b_top_matched_bqq_SRPdf + n_exp_binSR_proc_b_top_matched_bq * shapeBkg_b_top_matched_bq_SRPdf + n_exp_binSR_proc_b_w_matched_others * shapeBkg_b_w_matched_others_SRPdf + n_exp_binSR_proc_b_others * shapeBkg_b_others_SRPdf ] = 0.0669806
+RooHistPdf::shapeBkg_b_others_SRPdf[ pdfObs=(MH_Reco) ] = 0.102564
+RooHistPdf::shapeBkg_b_top_matched_bq_SRPdf[ pdfObs=(MH_Reco) ] = 0
+RooHistPdf::shapeBkg_b_top_matched_bqq_SRPdf[ pdfObs=(MH_Reco) ] = 0.512821
+RooHistPdf::shapeBkg_b_w_matched_others_SRPdf[ pdfObs=(MH_Reco) ] = 0
+RooHistPdf::shapeSig_s_top_matched_bq_SRPdf[ pdfObs=(MH_Reco) ] = 0
+RooHistPdf::shapeSig_s_w_matched_cb_SRPdf[ pdfObs=(MH_Reco) ] = 0
+
+functions
+--------
+ProcessNormalization::n_exp_binSR_proc_s_top_matched_bq[ thetaList=() asymmThetaList=() otherFactorList=(r) ] = 9.231
+ProcessNormalization::n_exp_binSR_proc_s_w_matched_cb[ thetaList=() asymmThetaList=() otherFactorList=(r) ] = 43.077
+
+datasets
+--------
+RooDataSet::data_obs(MH_Reco,CMS_channel)
+
+embedded datasets (in pdfs and functions)
+-----------------------------------------
+RooDataHist::shapeSig_s_top_matched_bq_SR(MH_Reco)
+RooDataHist::shapeSig_s_w_matched_cb_SR(MH_Reco)
+RooDataHist::shapeBkg_b_top_matched_bqq_SR(MH_Reco)
+RooDataHist::shapeBkg_b_top_matched_bq_SR(MH_Reco)
+RooDataHist::shapeBkg_b_w_matched_others_SR(MH_Reco)
+RooDataHist::shapeBkg_b_others_SR(MH_Reco)
+
+named sets
+----------
+ModelConfig_Observables:(MH_Reco,CMS_channel)
+ModelConfig_POI:(r)
+ModelConfig_bonly_Observables:(MH_Reco,CMS_channel)
+ModelConfig_bonly_POI:(r)
+POI:(r)
+globalObservables:()
+nuisances:()
+observables:(MH_Reco,CMS_channel)
+
+generic objects
+---------------
+RooStats::ModelConfig::ModelConfig
+RooStats::ModelConfig::ModelConfig_bonly
+RooArgSet::discreteParams
+
+Workspace has a ModelConfig for signal called 'ModelConfig', with contents:
+
+=== Using the following for ModelConfig ===
+Observables:             RooArgSet:: = (MH_Reco,CMS_channel)
+Parameters of Interest:  RooArgSet:: = (r)
+PDF:                     RooSimultaneousOpt::model_s[ indexCat=CMS_channel SR=pdf_binSR extraConstraints=() channelMasks=(mask_SR) ] = 0.0623455
+
+Input ModelConfig 'ModelConfig': 
+
+=== Using the following for ModelConfig ===
+Observables:             RooArgSet:: = (MH_Reco,CMS_channel)
+Parameters of Interest:  RooArgSet:: = (r)
+PDF:                     RooSimultaneousOpt::model_s[ indexCat=CMS_channel SR=pdf_binSR extraConstraints=() channelMasks=(mask_SR) ] = 0.0623455
+
+[#1] INFO:ObjectHandling -- RooWorkspace::import(w) importing RooUniform::prior
+>>> 0 out of 1 channels masked
+
+>>> Channel masks:
+  1) 0x5c44570 RooRealVar:: mask_SR = 0 C  L(-INF - +INF)  "mask_SR"
+Saving snapshot 'clean'
+Saved snapshot 'clean'
+[#1] INFO:InputArguments -- RooAbsReal::createHistogram(pdf_binSR) INFO: Model has intrinsic binning definition, selecting that binning for the histogram
+  ToyMCSampleOpt  -- Generating Asimov with histogram for pdf pdf_binSR: in 20 x-bins 
+ bin           MH_Reco       CMS_channel    weight
+   0                 5                SR     0.0000000
+   1                15                SR     0.0000000
+   2                25                SR     0.0000000
+   3                35                SR     0.0000000
+   4                45                SR     0.0000000
+   5                55                SR    58.4616232
+   6                65                SR    74.8718548
+   7                75                SR   117.9488277
+   8                85                SR   155.8975029
+   9                95                SR   109.7436523
+  10               105                SR    59.4872713
+  11               115                SR    47.1795511
+  12               125                SR    34.8718381
+  13               135                SR    31.7948818
+  14               145                SR    22.5640988
+  15               155                SR    11.2820494
+  16               165                SR    15.3846037
+  17               175                SR     6.1538428
+  18               185                SR     4.1025603
+  19               195                SR     6.1538398
+PDF didn't factorize!
+Parameters: 
+  1) RooRealVar::                             mask_SR = 0
+  2) RooRealVar::           n_exp_binSR_proc_b_others = 146.667
+  3) RooRealVar::   n_exp_binSR_proc_b_top_matched_bq = 321.026
+  4) RooRealVar::  n_exp_binSR_proc_b_top_matched_bqq = 62.564
+  5) RooRealVar:: n_exp_binSR_proc_b_w_matched_others = 173.333
+  6) RooRealVar::                                   r = 0
+Obs: 
+  1) RooRealVar::     MH_Reco = 195
+  2) RooCategory:: CMS_channel = SR(idx = 0)
+
+SimNLL created with 1 channels, 0 generic constraints, 0 fast gaussian constraints, 0 fast poisson constraints, 0 fast group constraints, 
+Minuit2Minimizer: Minimize with max-calls 500 convergence for edm < 0.1 strategy 1
+Minuit2Minimizer::Minuit  - Changing default options
+             StorageLevel :               0
+MnSeedGenerator: for initial parameters FCN = 0
+MnSeedGenerator: Initial state:   - FCN =                0 Edm =      2.18747 NCalls =      5
+VariableMetric: start iterating until Edm is < 0.0001
+VariableMetric: Initial state   - FCN =                0 Edm =      2.18747 NCalls =      5
+VariableMetric: Iteration #   0 - FCN =                0 Edm =      2.18747 NCalls =      5
+VariableMetric: Iteration #   1 - FCN =  -2.149451347801 Edm =  0.000436951 NCalls =      8
+VariableMetric: Iteration #   2 - FCN =  -2.149901501139 Edm =   8.3823e-07 NCalls =     11
+VariableMetric: After Hessian   - FCN =  -2.149901501139 Edm =  8.75131e-07 NCalls =     16
+VariableMetric: Iteration #   3 - FCN =  -2.149901501139 Edm =  8.75131e-07 NCalls =     16
+Number of iterations 4
+----------> Iteration 0
+            FVAL = 0 Edm = 2.18746863242 Nfcn = 5
+            Error matrix change = 1
+            Parameters :  p0 = 2
+----------> Iteration 1
+            FVAL = -2.1494513478 Edm = 0.000436950882246 Nfcn = 8
+            Error matrix change = 0.507067
+            Parameters :  p0 = 0.98597
+----------> Iteration 2
+            FVAL = -2.14990150114 Edm = 8.38229800658e-07 Nfcn = 11
+            Error matrix change = 0.275587
+            Parameters :  p0 = 0.999382
+----------> Iteration 3
+            FVAL = -2.14990150114 Edm = 8.75131419858e-07 Nfcn = 16
+            Error matrix change = 0
+            Parameters :  p0 = 0.999382
+Minuit2Minimizer : Valid minimum - status = 0
+FVAL  = -2.14990150113907186
+Edm   = 8.75131419857504327e-07
+Nfcn  = 16
+r	  = 0.999382	 +/-  0.462906	(limited)
+
+ -- Significance -- 
+Significance: 2.21504
+       (p-value = 0.0133786)
+Done in 0.00 min (cpu), 0.00 min (real)
+Printing Message Summary From ... combine_logger.out
+----------------------------------------------
+Messages of type INFO : 14
+Messages of type DEBUG : 0
+Messages of type ERROR : 0
+----------------------------------------------
+INFO: (function: run) Combine.cc: 989 -- Generate Asimov toy from parameter values ... 
+INFO: (function: run) Combine.cc: 993 -- CMS_channel = 0 
+INFO: (function: run) Combine.cc: 993 -- MH_Reco = 195 
+INFO: (function: run) Combine.cc: 993 -- mask_SR = 0 (constant)
+INFO: (function: run) Combine.cc: 993 -- n_exp_binSR_proc_b_others = 146.667 (constant)
+INFO: (function: run) Combine.cc: 993 -- n_exp_binSR_proc_b_top_matched_bq = 321.026 (constant)
+INFO: (function: run) Combine.cc: 993 -- n_exp_binSR_proc_b_top_matched_bqq = 62.564 (constant)
+INFO: (function: run) Combine.cc: 993 -- n_exp_binSR_proc_b_w_matched_others = 173.333 (constant)
+INFO: (function: run) Combine.cc: 993 -- r = 1 
+INFO: (function: generateAsimov) ToyMCSamplerOpt.cc: 146 -- Using internal logic for binned/unbinned Asimov dataset generation
+INFO: (function: generateWithHisto) ToyMCSamplerOpt.cc: 221 -- Generating asimov with histogram for pdf pdf_binSR: in 20 x-bins
+INFO: (function: improveOnce) CascadeMinimizer.cc: 188 -- Minimisation configured with Type=Minuit2, Algo=Migrad, strategy=1, tolerance=0.1
+INFO: (function: improveOnce) CascadeMinimizer.cc: 211 -- Minimisation finished with status=0
+INFO: (function: improveOnce) CascadeMinimizer.cc: 216 -- Minimization success! status=0
