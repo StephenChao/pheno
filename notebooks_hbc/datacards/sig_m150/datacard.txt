@@ -13,7 +13,7 @@ shapes  *  pt400toInffail  input_pt400toInf_fail.root $PROCESS $PROCESS_$SYSTEMA
 
 ------------
 bin pt200to250pass pt250to300pass pt300to400pass pt400toInfpass pt200to250fail pt250to300fail pt300to400fail pt400toInffail
-observation 193.75891681066344 135.98421280722172 116.66686834135305 58.56758058158908 8182.767844984501 7649.55039957139 8616.52344240755 8761.50352140155
+observation 103.26224176963495 133.56866542405515 109.15673695271639 34.59406188281491 4531.875819267008 7169.051943293527 8265.737010884028 6781.380599078522
 ------------
 
 bin              pt200to250pass  pt200to250pass  pt200to250pass   pt200to250pass      pt250to300pass  pt250to300pass  pt250to300pass   pt250to300pass       pt300to400pass  pt300to400pass  pt300to400pass   pt300to400pass      pt400toInfpass  pt400toInfpass  pt400toInfpass   pt400toInfpass      pt200to250fail  pt200to250fail  pt200to250fail   pt200to250fail      pt250to300fail  pt250to300fail  pt250to300fail   pt250to300fail      pt300to400fail  pt300to400fail  pt300to400fail   pt300to400fail      pt400toInffail  pt400toInffail  pt400toInffail   pt400toInffail       
