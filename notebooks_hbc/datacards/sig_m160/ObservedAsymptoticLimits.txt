@@ -6,11 +6,11 @@ SimNLL created with 8 channels, 0 generic constraints, 16 fast gaussian constrai
 SimNLL created with 8 channels, 0 generic constraints, 16 fast gaussian constraints, 0 fast poisson constraints, 0 fast group constraints, 
 
  -- AsymptoticLimits ( CLs ) --
-Observed Limit: r < 0.1771
-Expected  2.5%: r < 0.0679
-Expected 16.0%: r < 0.1080
-Expected 50.0%: r < 0.1772
-Expected 84.0%: r < 0.2818
-Expected 97.5%: r < 0.4124
+Observed Limit: r < 0.1320
+Expected  2.5%: r < 0.0474
+Expected 16.0%: r < 0.0777
+Expected 50.0%: r < 0.1318
+Expected 84.0%: r < 0.2170
+Expected 97.5%: r < 0.3219
 
 Done in 0.02 min (cpu), 0.02 min (real)

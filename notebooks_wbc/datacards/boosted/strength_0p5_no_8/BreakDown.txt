@@ -1,0 +1,14 @@
+Info in <TCanvas::Print>: pdf file ./full_unce_breakdown.pdf has been created
+Info in <TCanvas::Print>: png file ./full_unce_breakdown.png has been created
+--------------------------------------
+full_unce_breakdown
+--------------------------------------
+[{'lo': 0.7729804974201618, 'hi': 1.242114004015072, 'valid_lo': True, 'valid_hi': True}]
+[{'lo': 0.560416383663747, 'hi': 1.5000845819264772, 'valid_lo': True, 'valid_hi': True}]
+[{'lo': 0.7753849034842536, 'hi': 1.2389131776143307, 'valid_lo': True, 'valid_hi': True}]
+[{'lo': 0.5645677318223237, 'hi': 1.4927527683622897, 'valid_lo': True, 'valid_hi': True}]
+[{'lo': 0.7982946280748942, 'hi': 1.210210642599606, 'valid_lo': True, 'valid_hi': True}]
+[{'lo': 0.6052231621265252, 'hi': 1.4288682553874181, 'valid_lo': True, 'valid_hi': True}]
+ftag:up:0.0392455165014523, down: 0.03294597268256936
+wcb_sf:up:0.11354229216013742, down: 0.09882405627792641
+stats:up:0.2102251265282864, down: 0.20169088799642543

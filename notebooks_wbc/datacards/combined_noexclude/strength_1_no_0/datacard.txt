@@ -1,0 +1,37 @@
+Combination of ../../boosted/strength_1_no_0/datacard.txt  ../../resolved/strength_1_no_0/datacard.txt
+imax 3 number of bins
+jmax 4 number of processes minus 1
+kmax 16 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes *        ch1_SR1  ../../boosted/strength_1_no_0/input_SR1.root $PROCESS $PROCESS_$SYSTEMATIC
+shapes *        ch1_SR2  ../../boosted/strength_1_no_0/input_SR2.root $PROCESS $PROCESS_$SYSTEMATIC
+shapes *        ch2      ../../resolved/strength_1_no_0/input_SR.root $PROCESS $PROCESS_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+bin          ch1_SR1          ch1_SR2          ch2            
+observation  29.2062756068    6073.2754035019  45.4093607298  
+----------------------------------------------------------------------------------------------------------------------------------
+bin                               ch1_SR1             ch1_SR1             ch1_SR1             ch1_SR1             ch1_SR2             ch1_SR2             ch1_SR2             ch1_SR2             ch2                 ch2                 ch2               
+process                           sig                 bkg_wjets           bkg_allwhad_tbc     bkg_allwhad_others  sig                 bkg_wjets           bkg_allwhad_tbc     bkg_allwhad_others  sig                 bkg_wjets           bkg_allwhad       
+process                           0                   1                   2                   3                   0                   1                   2                   3                   0                   1                   4                 
+rate                              -1                  -1                  -1                  -1                  -1                  -1                  -1                  -1                  -1                  -1                  -1                
+----------------------------------------------------------------------------------------------------------------------------------
+ftag_bjet_B1            shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_bjet_B2            shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_bjet_C1            shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_bjet_C2            shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_bjet_N             shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_cjet_B1            shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_cjet_B2            shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_cjet_C1            shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_cjet_C2            shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_cjet_N             shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_ljet_B1            shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_ljet_B2            shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_ljet_C1            shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_ljet_C2            shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+ftag_ljet_N             shape     1.0                 1.0                 1.0                 1.0                 -                   -                   -                   -                   1.0                 1.0                 1.0               
+lumi                    lnN       1.000001            1.000001            1.000001            1.000001            1.000001            1.000001            1.000001            1.000001            -                   -                   -                 
+wcb_sf        rateParam ch1_SR1 bkg_allwhad_tbc 1 [0.2,5.]
+wcb_sf        rateParam ch1_SR1 sig 1 [0.2,5.]
+wcb_sf        rateParam ch1_SR2 bkg_allwhad_tbc 1 [0.2,5.]
+wcb_sf        rateParam ch1_SR2 sig 1 [0.2,5.]

@@ -1,0 +1,9 @@
+ <<< Combine >>> 
+>>> random number generator seed is 123456
+   Options for Robust Minimizer :: 
+        Tolerance  5
+        Strategy   0
+        Type,Algo  Minuit2,Migrad
+>>> method used is MultiDimFit
+Error when running the combination:
+	File /data/pku/home/zhaoyz/pheno/notebooks_v2/datacards/new_senario/resolved/datacard.root does not exist

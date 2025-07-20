@@ -1,0 +1,40 @@
+imax 1  number of channels
+jmax 2  number of processes - 1
+kmax *  number of nuisance parameters (sources of systematical uncertainties)
+------------
+shapes  *  SR  input_SR.root $PROCESS $PROCESS_$SYSTEMATIC
+------------
+bin SR
+observation 30760.51293748008
+------------
+# now we list the expected events for signal and all backgrounds in that bin
+# the second 'process' line must have a positive number for backgrounds, and 0 for signal
+# then we list the independent sources of uncertainties, and give their effect (syst. error)
+# on each process and bin
+bin              SR         SR         SR
+process          sig        bkg_wjets  bkg_allwhad
+process          0          1          2
+rate             -1         -1         -1
+------------
+# lumi          lnN  1.000001 1.000001 1.000001
+ftag_bjet_B1  shape 1     1     1
+ftag_cjet_B1  shape 1     1     1
+ftag_ljet_B1  shape 1     1     1
+ftag_bjet_B2  shape 1     1     1
+ftag_cjet_B2  shape 1     1     1
+ftag_ljet_B2  shape 1     1     1
+ftag_bjet_C1  shape 1     1     1
+ftag_cjet_C1  shape 1     1     1
+ftag_ljet_C1  shape 1     1     1
+ftag_bjet_C2  shape 1     1     1
+ftag_cjet_C2  shape 1     1     1
+ftag_ljet_C2  shape 1     1     1
+ftag_bjet_N   shape 1     1     1
+ftag_cjet_N   shape 1     1     1
+ftag_ljet_N   shape 1     1     1
+
+# in fact, no need to define groups for unc breakdown
+# ftag_bjet     group = ftag_bjet_B1 ftag_bjet_B2 ftag_bjet_C1 ftag_bjet_C2 ftag_bjet_N
+# ftag_cjet     group = ftag_cjet_B1 ftag_cjet_B2 ftag_cjet_C1 ftag_cjet_C2 ftag_cjet_N
+# ftag_ljet     group = ftag_ljet_B1 ftag_ljet_B2 ftag_ljet_C1 ftag_ljet_C2 ftag_ljet_N
+# ftag          group = ftag_bjet_B1 ftag_bjet_B2 ftag_bjet_C1 ftag_bjet_C2 ftag_bjet_N ftag_cjet_B1 ftag_cjet_B2 ftag_cjet_C1 ftag_cjet_C2 ftag_cjet_N ftag_ljet_B1 ftag_ljet_B2 ftag_ljet_C1 ftag_ljet_C2 ftag_ljet_N
